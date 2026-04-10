@@ -5,11 +5,11 @@ const SUPABASE_ANON_KEY = 'sb_publishable_JWQLt7yJm0bw406beocZAQ_-t28acp3';
 function limpiarTextoVoz(textoBruto) {
     let texto = textoBruto.toUpperCase();
     
-    // 1. Purgar la basura humana (preposiciones y muletillas)
+    // Purga de basura acústica humana
     const basura = /\b(EL|LA|DE|DEL|LETRA|NÚMERO|NUMERO|LOTE|RAYA|ESPACIO)\b/g;
     texto = texto.replace(basura, '');
 
-    // 2. Matriz de conversión fonética de trinchera
+    // Traducción forzada a símbolos
     const correcciones = {
         "ÉLE": "L", "ELE": "L", "GUION": "-", "GUIÓN": "-", "MENOS": "-",
         "BARRA": "/", "PARTIDO": "/", "PUNTO": ".", "CERO": "0", "UNO": "1",
@@ -22,7 +22,7 @@ function limpiarTextoVoz(textoBruto) {
         texto = texto.replace(exp, simbolo);
     }
 
-    // 3. Aniquilación total: fulminamos espacios y cualquier símbolo no autorizado
+    // Aniquilación de espacios y caracteres extraños
     texto = texto.replace(/\s+/g, '');
     texto = texto.replace(/[^A-Z0-9\-\/\.]/g, '');
 
@@ -31,7 +31,7 @@ function limpiarTextoVoz(textoBruto) {
 
 function dictarLote(idCampo) {
     const Reconocimiento = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!Reconocimiento) { alert("Tu navegador es sordo. Cambia de dispositivo."); return; }
+    if (!Reconocimiento) { alert("Micrófono denegado o navegador no compatible."); return; }
     
     const reco = new Reconocimiento();
     reco.lang = 'es-ES';
@@ -43,14 +43,13 @@ function dictarLote(idCampo) {
         document.getElementById(idCampo).value = limpiarTextoVoz(escuchado);
     };
     
-    // Si la máquina no oye nada, marcamos en rojo levemente para avisar
     reco.onerror = () => { document.getElementById(idCampo).style.backgroundColor = "#ffcccc"; };
     reco.onend = () => { document.getElementById(idCampo).style.backgroundColor = "#fff"; };
     
     reco.start();
 }
 
-// --- GESTIÓN DE LA MEMORIA DE MATERIA PRIMA ---
+// --- MEMORIA DE MATERIA PRIMA ---
 const camposAtrasar = [
     'lote-vinagre', 'lote-sal', 'lote-ajo', 'lote-aceite', 
     'lote-limon', 'lote-pimiento', 'lote-envase'
@@ -59,7 +58,6 @@ const camposAtrasar = [
 function guardarMemoria() {
     camposAtrasar.forEach(id => {
         const valor = document.getElementById(id).value;
-        // Solo guardamos si hay algo escrito, para no borrar por accidente con vacíos
         if(valor) localStorage.setItem(id, valor);
     });
 }
@@ -73,44 +71,89 @@ function cargarMemoria() {
     });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    const reloj = document.getElementById('reloj');
-    const formHigiene = document.getElementById('formulario-higiene');
-    const formTraza = document.getElementById('formulario-trazabilidad');
-    const btnImprimir = document.getElementById('btn-imprimir-traza');
-
-    // Recuperamos lo que Paqui escribió en el turno anterior
+// --- ARRANQUE GENERAL DEL SISTEMA ---
+document.addEventListener('DOMContentLoaded', async () => {
+    
+    // 1. Restaurar memoria y arrancar reloj
     cargarMemoria();
+    setInterval(() => { document.getElementById('reloj').textContent = new Date().toLocaleTimeString('es-ES'); }, 1000);
 
-    setInterval(() => { reloj.textContent = new Date().toLocaleTimeString('es-ES'); }, 1000);
+    // 2. Trazar gráfica de frío (Últimos 15 registros)
+    try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/registro_higiene?select=fecha_hora,temperatura&order=fecha_hora.desc&limit=15`, { headers: { 'apikey': SUPABASE_ANON_KEY }});
+        const datosFrio = await res.json();
+        datosFrio.reverse(); // Para que el más antiguo salga a la izquierda
+        
+        const ctxGrafica = document.getElementById('grafica-temperatura').getContext('2d');
+        new Chart(ctxGrafica, {
+            type: 'line',
+            data: {
+                labels: datosFrio.map(d => new Date(d.fecha_hora).toLocaleDateString('es-ES').substring(0,5)),
+                datasets: [{ label: 'ºC Cámara', data: datosFrio.map(d => d.temperatura), borderColor: '#2980b9', tension: 0.3, fill: false }]
+            },
+            options: { responsive: true, plugins: { legend: { display: true } }, scales: { y: { suggestedMin: 0, suggestedMax: 10 } } }
+        });
+    } catch(e) { console.log("Datos de frío no disponibles o insuficientes."); }
 
-    // MÓDULO 1: HIGIENE
-    formHigiene.addEventListener('submit', async (e) => {
+    // 3. Activar el lienzo de responsabilidad (Firma táctil)
+    const canvas = document.getElementById('lienzo-firma');
+    const ctx = canvas.getContext('2d');
+    let dibujando = false;
+
+    const iniciarTrazado = (e) => { 
+        dibujando = true; ctx.beginPath(); 
+        const rect = canvas.getBoundingClientRect();
+        const ev = e.touches ? e.touches[0] : e;
+        ctx.moveTo(ev.clientX - rect.left, ev.clientY - rect.top);
+        e.preventDefault(); 
+    };
+    const dibujar = (e) => { 
+        if (!dibujando) return;
+        const rect = canvas.getBoundingClientRect();
+        const ev = e.touches ? e.touches[0] : e;
+        ctx.lineTo(ev.clientX - rect.left, ev.clientY - rect.top);
+        ctx.stroke();
+        e.preventDefault();
+    };
+    const detenerTrazado = () => { dibujando = false; };
+
+    canvas.addEventListener('mousedown', iniciarTrazado); 
+    canvas.addEventListener('mousemove', dibujar); 
+    canvas.addEventListener('mouseup', detenerTrazado);
+    canvas.addEventListener('touchstart', iniciarTrazado); 
+    canvas.addEventListener('touchmove', dibujar); 
+    canvas.addEventListener('touchend', detenerTrazado);
+
+    document.getElementById('btn-limpiar-firma').addEventListener('click', () => { 
+        ctx.clearRect(0, 0, canvas.width, canvas.height); 
+    });
+
+    // 4. Registro de Higiene
+    document.getElementById('formulario-higiene').addEventListener('submit', async (e) => {
         e.preventDefault();
         const datos = {
             cloro: parseFloat(document.getElementById('cloro').value),
             organoleptico: document.querySelector('input[name="organoleptico"]:checked').value,
             temperatura: parseFloat(document.getElementById('temperatura').value),
-            firma: "Paqui"
+            firma: "Manual"
         };
         try {
             const res = await fetch(`${SUPABASE_URL}/rest/v1/registro_higiene`, {
                 method: 'POST',
-                headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+                headers: { 'apikey': SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
                 body: JSON.stringify(datos)
             });
             if (res.ok) { 
-                alert('✅ Plan de Higiene sellado en la base de datos.'); 
-                formHigiene.reset(); 
-            } else throw new Error("Fallo en la red.");
-        } catch (err) { alert('❌ Error: El parte de higiene no ha llegado al servidor.'); }
+                alert('✅ Plan de Higiene sellado.'); 
+                document.getElementById('formulario-higiene').reset(); 
+                location.reload(); 
+            } else throw new Error("Falla en transmisión.");
+        } catch (err) { alert('❌ Error: El parte de higiene no ha llegado a la base de datos.'); }
     });
 
-    // MÓDULO 2: TRAZABILIDAD (Memoria + Purificador)
-    formTraza.addEventListener('submit', async (e) => {
+    // 5. Registro de Trazabilidad
+    document.getElementById('formulario-trazabilidad').addEventListener('submit', async (e) => {
         e.preventDefault();
-        
-        // Blindamos los datos fijos antes de disparar
         guardarMemoria();
 
         const datos = {
@@ -124,27 +167,28 @@ document.addEventListener('DOMContentLoaded', () => {
             lote_envases: document.getElementById('lote-envase').value,
             litros: parseFloat(document.getElementById('litros-prod').value),
             lote_gazpacho_salida: document.getElementById('lote-salida').value,
-            firma: "Paqui"
+            firma: "Biométrica"
         };
 
         try {
             const res = await fetch(`${SUPABASE_URL}/rest/v1/registro_trazabilidad`, {
                 method: 'POST',
-                headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+                headers: { 'apikey': SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
                 body: JSON.stringify(datos)
             });
 
             if (res.ok) { 
-                alert('✅ Lote asegurado. Producción registrada.'); 
-                // Limpiamos estrictamente lo que caduca a diario
+                alert('✅ Producción registrada.'); 
                 document.getElementById('lote-tomate').value = '';
                 document.getElementById('litros-prod').value = '';
                 document.getElementById('lote-salida').value = '';
-            } else throw new Error("Fallo en la red.");
-        } catch (err) { alert('❌ Error: El lote se ha perdido por falta de conexión.'); }
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            } else throw new Error("Falla en transmisión.");
+        } catch (err) { alert('❌ Error: El lote se ha perdido por falta de red.'); }
     });
 
-    // MÓDULO 3: PDF UNIFICADO CRUZADO
+    // 6. Generador PDF Unificado con inyección de firma
+    const btnImprimir = document.getElementById('btn-imprimir-traza');
     btnImprimir.addEventListener('click', async () => {
         btnImprimir.textContent = "⏳ CRUZANDO DATOS...";
         try {
@@ -153,7 +197,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 fetch(`${SUPABASE_URL}/rest/v1/registro_trazabilidad?select=*&order=fecha_hora.asc`, { headers: { 'apikey': SUPABASE_ANON_KEY }})
             ]);
             
-            if (!resH.ok || !resT.ok) throw new Error("Archivos denegados por Supabase.");
+            if (!resH.ok || !resT.ok) throw new Error("Acceso denegado.");
 
             const higiene = await resH.json();
             const traza = await resT.json();
@@ -178,8 +222,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 styles: { fontSize: 7, halign: 'center' },
                 headStyles: { fillColor: [230, 230, 230], textColor: [0,0,0] }
             });
-            doc.save('Informe_Unificado_El_Hortelano.pdf');
-        } catch (err) { alert('❌ Error crítico al cruzar los datos. Revisa la red.'); }
+
+            // Extraer el garabato del lienzo y clavarlo en el PDF
+            const firmaDatos = canvas.toDataURL('image/png');
+            const posFirmaY = doc.lastAutoTable.finalY + 10;
+            doc.text("Firma del Responsable:", 14, posFirmaY);
+            doc.addImage(firmaDatos, 'PNG', 14, posFirmaY + 5, 50, 25);
+
+            doc.save('Informe_Oficial_El_Hortelano.pdf');
+        } catch (err) { alert('❌ Error crítico al compilar el documento.'); }
         finally { btnImprimir.textContent = "🖨️ IMPRIMIR REGISTRO PDF"; }
     });
 });
