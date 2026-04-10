@@ -97,13 +97,26 @@ input[type="radio"] { display: none; }
 
 .btn-micro:active { background: #e67e22; }
 
-/* Estilos para la Gráfica y la Firma Táctil */
-.panel-grafica {
+/* Estructura para la Doble Gráfica */
+.panel-graficas {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
     background: #fff;
-    padding: 10px;
+    padding: 15px;
     border: 2px solid #bdc3c7;
     border-radius: 8px;
     margin-bottom: 20px;
+}
+
+@media (min-width: 600px) {
+    .panel-graficas {
+        flex-direction: row;
+    }
+    .grafica-contenedor {
+        flex: 1;
+        width: 50%;
+    }
 }
 
 .grupo-firma {
