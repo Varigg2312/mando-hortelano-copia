@@ -1,40 +1,51 @@
 const SUPABASE_URL = 'https://sesrmzxwpgxobfrmuaix.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_JWQLt7yJm0bw406beocZAQ_-t28acp3';
-let tokenSeguridad = null; 
+const EMAIL_OFICIAL = 'alimentoselhortelano@gmail.com'; // El correo que ya configuraste
 
-// --- LOGIN ---
+let tokenSeguridad = localStorage.getItem('llave_hortelano'); 
+
+// --- 0. BÓVEDA CON PIN Y MEMORIA ---
+async function verificarAccesoAlCargar() {
+    if (tokenSeguridad) {
+        document.getElementById('pantalla-login').classList.add('oculto');
+        iniciarMaquinaria();
+    }
+}
+
 document.getElementById('btn-login').addEventListener('click', async () => {
-    const email = document.getElementById('login-email').value;
-    const password = document.getElementById('login-pass').value;
+    const pin = document.getElementById('login-pin').value;
     const btn = document.getElementById('btn-login');
     const errorMsg = document.getElementById('login-error');
     
-    btn.textContent = "VERIFICANDO...";
+    if (!pin) return;
+    btn.textContent = "VERIFICANDO PIN...";
     errorMsg.style.display = 'none';
 
     try {
         const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
             method: 'POST',
             headers: { 'apikey': SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
+            body: JSON.stringify({ email: EMAIL_OFICIAL, password: pin })
         });
 
         const data = await res.json();
-        
         if (res.ok && data.access_token) {
             tokenSeguridad = data.access_token;
-            // Usamos la clase para ocultar con fuerza bruta
+            localStorage.setItem('llave_hortelano', tokenSeguridad); // Guardamos en el cristal
             document.getElementById('pantalla-login').classList.add('oculto');
             iniciarMaquinaria();
         } else {
-            throw new Error(data.error_description || "Credenciales inválidas");
+            throw new Error("PIN Incorrecto.");
         }
     } catch (err) {
-        errorMsg.textContent = "ERROR: " + err.message;
+        errorMsg.textContent = err.message;
         errorMsg.style.display = 'block';
-        btn.textContent = "DESBLOQUEAR SISTEMA";
+        btn.textContent = "DESBLOQUEAR";
     }
 });
+
+// Arrancamos la verificación de entrada
+verificarAccesoAlCargar();
 
 function iniciarMaquinaria() {
     // --- VOZ ---
@@ -47,7 +58,7 @@ function iniciarMaquinaria() {
 
     window.dictarLote = (id) => {
         const R = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!R) return alert("Sordo.");
+        if (!R) return alert("Navegador sordo.");
         const reco = new R(); reco.lang = 'es-ES';
         reco.onstart = () => { document.getElementById(id).style.backgroundColor = "#fff3cd"; };
         reco.onresult = (e) => { document.getElementById(id).value = limpiarTextoVoz(e.results[0][0].transcript); };
@@ -87,7 +98,7 @@ function iniciarMaquinaria() {
         e.preventDefault();
         const body = JSON.stringify({ cloro: parseFloat(document.getElementById('cloro').value), organoleptico: document.querySelector('input[name="organoleptico"]:checked').value, temperatura: parseFloat(document.getElementById('temperatura').value), firma: "Manual" });
         const r = await fetch(`${SUPABASE_URL}/rest/v1/registro_higiene`, { method: 'POST', headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${tokenSeguridad}`, 'Content-Type': 'application/json' }, body });
-        if (r.ok) { alert('✅ Higiene OK.'); location.reload(); }
+        if (r.ok) { alert('✅ Higiene OK.'); cargarG(); }
     });
 
     document.getElementById('formulario-trazabilidad').addEventListener('submit', async (e) => {
