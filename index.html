@@ -3,84 +3,186 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mando Central - El Hortelano</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Dictamen de Auditoría y Gestión - El Hortelano</title>
+    <style>
+        :root { --dark: #111; --accent: #2c3e50; --loss: #8b0000; --gain: #27ae60; --gray: #f4f7f6; }
+        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: var(--gray); padding: 20px; color: var(--dark); margin: 0; }
+        .container { max-width: 1300px; margin: auto; background: #fff; padding: 40px; border-top: 10px solid var(--loss); box-shadow: 5px 5px 15px rgba(0,0,0,0.1); }
+        h1 { text-align: center; text-transform: uppercase; letter-spacing: 2px; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-top: 0; color: var(--loss); }
+        .subtitle { text-align: center; font-size: 12px; text-transform: uppercase; color: #555; font-weight: bold; margin-bottom: 30px; }
+        
+        .setup-panel { background: #fff9f9; padding: 20px; border: 1px solid #ccc; border-left: 5px solid var(--loss); margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
+        .setup-panel label { font-weight: bold; font-size: 13px; text-transform: uppercase; }
+        .setup-panel input { padding: 8px; font-size: 14px; font-family: monospace; font-weight: bold; width: 60px; text-align: right; border: 1px solid #aaa; }
+        
+        .grid { display: grid; grid-template-columns: 1fr 1.3fr; gap: 30px; }
+        .section-title { font-size: 14px; text-transform: uppercase; font-weight: bold; background: var(--dark); color: #fff; padding: 10px; margin: 0; }
+        
+        table { width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 20px; background: #fff; border: 1px solid #eee; }
+        th { background: #f0f0f0; color: var(--dark); padding: 12px 10px; text-align: left; text-transform: uppercase; font-size: 9px; border-bottom: 2px solid #ccc; }
+        td { padding: 10px; border-bottom: 1px solid #eee; }
+        .num { font-family: monospace; font-size: 13px; font-weight: bold; text-align: right; }
+        
+        .btn-del { background: none; border: 1px solid #ddd; color: #aaa; cursor: pointer; padding: 2px 8px; font-size: 10px; text-transform: uppercase; transition: 0.2s; }
+        .btn-del:hover { background: var(--loss); color: white; border-color: var(--loss); }
+
+        .kpi-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-top: 30px; border-top: 2px solid var(--dark); padding-top: 30px; }
+        .kpi-card { border: 1px solid #ccc; padding: 15px; text-align: center; background: #fff; }
+        .kpi-card small { display: block; font-size: 10px; text-transform: uppercase; color: #555; margin-bottom: 8px; font-weight: bold; }
+        .kpi-card span { font-size: 18px; font-weight: bold; font-family: monospace; display: block; }
+        .kpi-dark { background: var(--dark); color: #fff; border-color: var(--dark); }
+        
+        .form-panel { margin-top: 40px; padding: 25px; border: 1px dashed #aaa; background: #fdfdfd; }
+        .form-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+        .field { display: flex; flex-direction: column; flex: 1; min-width: 120px; }
+        label { font-size: 9px; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; color: var(--dark); }
+        input, select { padding: 8px; border: 1px solid #aaa; font-size: 12px; }
+        .btn-add { background: var(--loss); color: white; font-weight: bold; cursor: pointer; border: none; padding: 10px; text-transform: uppercase; font-size: 11px; }
+
+        @media print { .no-print { display: none; } .container { box-shadow: none; border: none; padding: 0; } .btn-del { display: none; } }
+    </style>
 </head>
 <body>
-    <div id="pantalla-login" class="login-overlay">
-        <div class="login-caja">
-            <h2>Acceso al Mando</h2>
-            <p>Introduce el PIN de Producción</p>
-            <input type="number" id="login-pin" placeholder="0 0 0 0" pattern="\d*" inputmode="numeric" style="font-size: 2.5rem; text-align: center; letter-spacing: 10px;">
-            <button id="btn-login" class="btn-inmenso" style="background-color: #c0392b; margin-top: 15px;">DESBLOQUEAR</button>
-            <p id="login-error" style="color: red; display: none; margin-top: 15px; font-weight: bold;"></p>
+
+<div class="container">
+    <h1>Dictamen de Auditoría y Gestión de Albaranes</h1>
+    <div class="subtitle">Auditoría Operativa Forense | El Hortelano</div>
+    
+    <div class="setup-panel">
+        <div>
+            <label>Índice de Merma (Suciedad/Desecho):</label>
+            <input type="number" id="cfgMerma" value="20" onchange="renderTables()"> %
+        </div>
+        <div style="font-size: 11px; color: #555; text-align: right;">
+            Cálculo dinámico basado en proporciones netas:<br>
+            <strong>Gazpacho:</strong> 35L / 24kg limpia | <strong>Salmorejo:</strong> 24kg / 24kg limpia
         </div>
     </div>
 
-    <div class="contenedor-principal">
-        <header>
-            <h1>Mando Central - El Hortelano</h1>
-            <p id="reloj">--:--:--</p>
-        </header>
-
-        <div class="panel-graficas">
-            <div class="grafica-contenedor"><canvas id="grafica-temperatura"></canvas></div>
-            <div class="grafica-contenedor"><canvas id="grafica-cloro"></canvas></div>
+    <div class="grid">
+        <div>
+            <div class="section-title">Recepción de Tomate Bruto</div>
+            <table id="tableIn">
+                <thead><tr><th>Fecha</th><th>Ref. Albarán</th><th style="text-align: right;">Masa</th><th class="no-print">Gestión</th></tr></thead>
+                <tbody></tbody>
+            </table>
         </div>
 
-        <form id="formulario-higiene">
-            <fieldset>
-                <legend>Plan de Agua e Higiene (11:00 AM)</legend>
-                <div class="grupo-control">
-                    <label for="cloro">Cloro Libre Residual (mg/L):</label>
-                    <input type="number" id="cloro" step="0.1" required>
-                </div>
-                <div class="grupo-control">
-                    <label>Examen Organoléptico:</label>
-                    <div class="botones-binarios">
-                        <input type="radio" id="org-ok" name="organoleptico" value="Normal" required>
-                        <label for="org-ok" class="btn-verde">NORMAL</label>
-                        <input type="radio" id="org-mal" name="organoleptico" value="Anómalo">
-                        <label for="org-mal" class="btn-rojo">ANÓMALO</label>
-                    </div>
-                </div>
-                <div class="grupo-control">
-                    <label for="temperatura">Temperatura Cámara (ºC):</label>
-                    <input type="number" id="temperatura" step="0.1" required>
-                </div>
-            </fieldset>
-            <button type="submit" class="btn-inmenso">FIRMAR PGH</button>
-        </form>
-
-        <form id="formulario-trazabilidad" style="margin-top: 40px;">
-            <fieldset>
-                <legend>Trazabilidad Total (Dictado Activo)</legend>
-                <div class="grupo-control-voz"><label for="lote-tomate">Lote Tomates:</label><div class="input-voz"><input type="text" id="lote-tomate" required><button type="button" class="btn-micro" onclick="dictarLote('lote-tomate')">🎤</button></div></div>
-                <div class="grupo-control-voz"><label for="lote-vinagre">Lote Vinagre:</label><div class="input-voz"><input type="text" id="lote-vinagre" required><button type="button" class="btn-micro" onclick="dictarLote('lote-vinagre')">🎤</button></div></div>
-                <div class="grupo-control-voz"><label for="lote-sal">Lote Sal:</label><div class="input-voz"><input type="text" id="lote-sal" required><button type="button" class="btn-micro" onclick="dictarLote('lote-sal')">🎤</button></div></div>
-                <div class="grupo-control-voz"><label for="lote-ajo">Lote Ajo:</label><div class="input-voz"><input type="text" id="lote-ajo" required><button type="button" class="btn-micro" onclick="dictarLote('lote-ajo')">🎤</button></div></div>
-                <div class="grupo-control-voz"><label for="lote-aceite">Lote Aceite:</label><div class="input-voz"><input type="text" id="lote-aceite" required><button type="button" class="btn-micro" onclick="dictarLote('lote-aceite')">🎤</button></div></div>
-                <div class="grupo-control-voz"><label for="lote-limon">Lote Limón:</label><div class="input-voz"><input type="text" id="lote-limon" required><button type="button" class="btn-micro" onclick="dictarLote('lote-limon')">🎤</button></div></div>
-                <div class="grupo-control-voz"><label for="lote-pimiento">Lote Pimiento:</label><div class="input-voz"><input type="text" id="lote-pimiento" required><button type="button" class="btn-micro" onclick="dictarLote('lote-pimiento')">🎤</button></div></div>
-                <div class="grupo-control-voz"><label for="lote-envase">Lote Envases:</label><div class="input-voz"><input type="text" id="lote-envase" required><button type="button" class="btn-micro" onclick="dictarLote('lote-envase')">🎤</button></div></div>
-                <div class="grupo-control-voz"><label for="litros-prod">Litros Producidos:</label><div class="input-voz"><input type="number" id="litros-prod" required><button type="button" class="btn-micro" onclick="dictarLote('litros-prod')">🎤</button></div></div>
-                <div class="grupo-control-voz"><label for="lote-salida">Lote Venta/Salida:</label><div class="input-voz"><input type="text" id="lote-salida" required><button type="button" class="btn-micro" onclick="dictarLote('lote-salida')">🎤</button></div></div>
-
-                <div class="grupo-firma" style="margin-top: 20px;">
-                    <label>Firma Biométrica del Responsable (Obligatoria):</label>
-                    <canvas id="lienzo-firma" width="300" height="150"></canvas>
-                    <button type="button" id="btn-limpiar-firma">Limpiar Cristal</button>
-                </div>
-            </fieldset>
-            <button type="submit" class="btn-inmenso" style="background-color: #2980b9;">SELLAR LOTE COMPLETO</button>
-        </form>
-
-        <hr style="margin: 30px 0; border: 1px solid #bdc3c7;">
-        <button type="button" id="btn-imprimir-traza" class="btn-inmenso" style="background-color: #8e44ad;">🖨️ IMPRIMIR INFORME DE FIRMAS (PDF)</button>
+        <div>
+            <div class="section-title">Expedición de Producto Terminado</div>
+            <table id="tableOut">
+                <thead><tr><th>Fecha</th><th>Clase</th><th style="text-align: right;">Cant.</th><th style="text-align: right;">Subtotal</th><th class="no-print">Gestión</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
     </div>
-    <script src="app.js"></script>
+
+    <div class="kpi-grid">
+        <div class="kpi-card"><small>Tomate Limpio Real</small><span id="kpiLimpio">0.00 kg</span></div>
+        <div class="kpi-card"><small>Tomate Exigido (Consumo)</small><span id="kpiConsumo">0.00 kg</span></div>
+        <div class="kpi-card" id="cardBal"><small>Balance Inventario</small><span id="kpiBalance">0.00 kg</span></div>
+        <div class="kpi-card"><small>Merma (Desecho)</small><span id="kpiBasura" style="color:#666;">0.00 kg</span></div>
+        <div class="kpi-card kpi-dark"><small>Liquidación Total</small><span id="kpiCash">0.00 €</span></div>
+    </div>
+
+    <div class="form-panel no-print">
+        <div class="form-row">
+            <div class="field"><label>Fecha</label><input type="date" id="fDate"></div>
+            <div class="field"><label>Operación</label>
+                <select id="fType">
+                    <option value="IN">ENTRADA: Tomate (kg)</option>
+                    <option value="GAZ">SALIDA: Gazpacho (L)</option>
+                    <option value="SAL">SALIDA: Salmorejo (kg)</option>
+                </select>
+            </div>
+            <div class="field"><label>Ref / Formato</label><input type="text" id="fRef"></div>
+            <div class="field"><label>Cantidad</label><input type="number" id="fQty" step="0.01"></div>
+            <div class="field"><label>Precio (€)</label><input type="number" id="fPrice" step="0.01"></div>
+            <button class="btn-add" onclick="addEntry()">Anotar Registro</button>
+        </div>
+    </div>
+    
+    <div style="margin-top: 20px; text-align: right;">
+        <button onclick="window.print()" class="no-print" style="padding: 10px 20px; cursor:pointer;">IMPRIMIR / PDF</button>
+    </div>
+</div>
+
+<script>
+    let inData = [
+        {date: '20/03/2026', ref: '639-914339', qty: 25.45},
+        {date: '01/04/2026', ref: '639-710835', qty: 72.00},
+        {date: '11/04/2026', ref: '639-915316', qty: 20.00},
+        {date: '22/04/2026', ref: '9-915159', qty: 20.50}
+    ];
+    
+    let outData = [
+        {date: '20/03/2026', type: 'GAZ', ref: 'Suministro', qty: 2.00, price: 2.20},
+        {date: '20/03/2026', type: 'SAL', ref: 'Suministro', qty: 2.00, price: 2.75},
+        {date: '28/03/2026', type: 'GAZ', ref: 'S/C', qty: 2.00, price: 0.00},
+        {date: '02/04/2026', type: 'GAZ', ref: 'Garrafas', qty: 110.00, price: 2.20},
+        {date: '16/04/2026', type: 'GAZ', ref: 'Suministro', qty: 20.00, price: 2.20},
+        {date: '16/04/2026', type: 'SAL', ref: 'Suministro', qty: 9.00, price: 2.75},
+        {date: '22/04/2026', type: 'GAZ', ref: 'Garrafas', qty: 10.00, price: 2.20},
+        {date: '24/04/2026', type: 'GAZ', ref: '10 Garrafas 5L', qty: 50.00, price: 2.20}
+    ];
+
+    function fmt(n) { return n.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+
+    function renderTables() {
+        const tbIn = document.getElementById('tableIn').tBodies[0];
+        tbIn.innerHTML = '';
+        let tBruto = 0;
+        inData.forEach((r, i) => {
+            tBruto += r.qty;
+            const tr = tbIn.insertRow();
+            tr.innerHTML = `<td>${r.date}</td><td>${r.ref}</td><td class="num">${fmt(r.qty)} kg</td>
+                            <td class="no-print"><button class="btn-del" onclick="delIn(${i})">Borrar</button></td>`;
+        });
+
+        const tbOut = document.getElementById('tableOut').tBodies[0];
+        tbOut.innerHTML = '';
+        let vGaz = 0, kSalm = 0, tEur = 0;
+        outData.forEach((r, i) => {
+            const sub = r.qty * r.price;
+            tEur += sub;
+            if(r.type === 'GAZ') vGaz += r.qty; else kSalm += r.qty;
+            const tr = tbOut.insertRow();
+            tr.innerHTML = `<td>${r.date}</td><td><strong>${r.type}</strong> <small>[${r.ref}]</small></td>
+                            <td class="num">${fmt(r.qty)}</td><td class="num">${fmt(sub)} €</td>
+                            <td class="no-print"><button class="btn-del" onclick="delOut(${i})">Borrar</button></td>`;
+        });
+
+        const merma = parseFloat(document.getElementById('cfgMerma').value) / 100;
+        const tLimpio = tBruto * (1 - merma);
+        const cons = (vGaz * (24/35)) + (kSalm * 1);
+        const bal = tLimpio - cons;
+
+        document.getElementById('kpiLimpio').innerText = fmt(tLimpio) + " kg";
+        document.getElementById('kpiConsumo').innerText = fmt(cons) + " kg";
+        document.getElementById('kpiBasura').innerText = fmt(tBruto * merma) + " kg";
+        document.getElementById('kpiCash').innerText = fmt(tEur) + " €";
+        document.getElementById('kpiBalance').innerText = (bal > 0 ? "+" : "") + fmt(bal) + " kg";
+        document.getElementById('cardBal').style.borderColor = bal < 0 ? "#8b0000" : "#27ae60";
+        document.getElementById('kpiBalance').style.color = bal < 0 ? "#8b0000" : "#27ae60";
+    }
+
+    function addEntry() {
+        const date = document.getElementById('fDate').value;
+        const type = document.getElementById('fType').value;
+        const qty = parseFloat(document.getElementById('fQty').value) || 0;
+        const price = parseFloat(document.getElementById('fPrice').value) || 0;
+        const ref = document.getElementById('fRef').value || "Manual";
+        if(!date || qty <= 0) return alert("Fecha y cantidad obligatorias");
+        const fDate = date.split('-').reverse().join('/');
+        if(type === 'IN') inData.push({date: fDate, ref: ref, qty: qty});
+        else outData.push({date: fDate, type: type, ref: ref, qty: qty, price: price});
+        renderTables();
+    }
+
+    function delIn(i) { inData.splice(i, 1); renderTables(); }
+    function delOut(i) { outData.splice(i, 1); renderTables(); }
+
+    renderTables();
+</script>
 </body>
 </html>
