@@ -3,58 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dictamen de Auditoría y Gestión - El Hortelano</title>
+    <title>Dictamen de Auditoría - El Hortelano (Móvil)</title>
     <style>
         :root { --dark: #111; --accent: #2c3e50; --loss: #8b0000; --gain: #27ae60; --gray: #f4f7f6; }
-        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: var(--gray); padding: 20px; color: var(--dark); margin: 0; }
-        .container { max-width: 1300px; margin: auto; background: #fff; padding: 40px; border-top: 10px solid var(--loss); box-shadow: 5px 5px 15px rgba(0,0,0,0.1); }
-        h1 { text-align: center; text-transform: uppercase; letter-spacing: 2px; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-top: 0; color: var(--loss); }
-        .subtitle { text-align: center; font-size: 12px; text-transform: uppercase; color: #555; font-weight: bold; margin-bottom: 30px; }
+        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: var(--gray); padding: 15px; color: var(--dark); margin: 0; }
+        .container { max-width: 1300px; margin: auto; background: #fff; padding: 20px; border-top: 10px solid var(--loss); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        h1 { text-align: center; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-top: 0; color: var(--loss); font-size: 1.5rem; }
+        .subtitle { text-align: center; font-size: 11px; text-transform: uppercase; color: #555; font-weight: bold; margin-bottom: 20px; }
         
-        .setup-panel { background: #fff9f9; padding: 20px; border: 1px solid #ccc; border-left: 5px solid var(--loss); margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
-        .setup-panel label { font-weight: bold; font-size: 13px; text-transform: uppercase; }
+        .setup-panel { background: #fff9f9; padding: 15px; border: 1px solid #ccc; border-left: 5px solid var(--loss); margin-bottom: 20px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 15px; }
+        .setup-panel label { font-weight: bold; font-size: 12px; text-transform: uppercase; }
         .setup-panel input { padding: 8px; font-size: 14px; font-family: monospace; font-weight: bold; width: 60px; text-align: right; border: 1px solid #aaa; }
+        .setup-desc { font-size: 11px; color: #555; flex: 1 1 100%; }
         
-        .grid { display: grid; grid-template-columns: 1fr 1.3fr; gap: 30px; }
-        .section-title { font-size: 14px; text-transform: uppercase; font-weight: bold; background: var(--dark); color: #fff; padding: 10px; margin: 0; }
+        .grid { display: grid; grid-template-columns: 1fr; gap: 30px; }
+        @media (min-width: 800px) { .grid { grid-template-columns: 1fr 1.3fr; } }
         
-        table { width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 20px; background: #fff; border: 1px solid #eee; }
-        th { background: #f0f0f0; color: var(--dark); padding: 12px 10px; text-align: left; text-transform: uppercase; font-size: 9px; border-bottom: 2px solid #ccc; }
+        .section-title { font-size: 13px; text-transform: uppercase; font-weight: bold; background: var(--dark); color: #fff; padding: 10px; margin: 0; }
+        
+        .table-wrapper { width: 100%; overflow-x: auto; margin-bottom: 10px; border: 1px solid #eee; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; min-width: 400px; }
+        th { background: #f0f0f0; color: var(--dark); padding: 10px; text-align: left; text-transform: uppercase; font-size: 9px; border-bottom: 2px solid #ccc; }
         td { padding: 10px; border-bottom: 1px solid #eee; }
-        .num { font-family: monospace; font-size: 13px; font-weight: bold; text-align: right; }
+        .num { font-family: monospace; font-size: 12px; font-weight: bold; text-align: right; }
         
-        .btn-del { background: none; border: 1px solid #ddd; color: #aaa; cursor: pointer; padding: 2px 8px; font-size: 10px; text-transform: uppercase; transition: 0.2s; }
+        .btn-del { background: none; border: 1px solid #ddd; color: #aaa; cursor: pointer; padding: 4px 8px; font-size: 9px; text-transform: uppercase; transition: 0.2s; }
         .btn-del:hover { background: var(--loss); color: white; border-color: var(--loss); }
 
-        .kpi-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-top: 30px; border-top: 2px solid var(--dark); padding-top: 30px; }
-        .kpi-card { border: 1px solid #ccc; padding: 15px; text-align: center; background: #fff; }
-        .kpi-card small { display: block; font-size: 10px; text-transform: uppercase; color: #555; margin-bottom: 8px; font-weight: bold; }
+        .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; border-top: 2px solid var(--dark); padding-top: 20px; }
+        @media (min-width: 800px) { .kpi-grid { grid-template-columns: repeat(5, 1fr); gap: 15px; } }
+        @media (max-width: 450px) { .kpi-grid { grid-template-columns: 1fr; } }
+        
+        .kpi-card { border: 1px solid #ccc; padding: 12px; text-align: center; background: #fff; }
+        .kpi-card small { display: block; font-size: 9px; text-transform: uppercase; color: #555; margin-bottom: 5px; font-weight: bold; }
         .kpi-card span { font-size: 18px; font-weight: bold; font-family: monospace; display: block; }
         .kpi-dark { background: var(--dark); color: #fff; border-color: var(--dark); }
         
-        .form-panel { margin-top: 40px; padding: 25px; border: 1px dashed #aaa; background: #fdfdfd; }
-        .form-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
-        .field { display: flex; flex-direction: column; flex: 1; min-width: 120px; }
-        label { font-size: 9px; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; color: var(--dark); }
-        input, select { padding: 8px; border: 1px solid #aaa; font-size: 12px; }
-        .btn-add { background: var(--loss); color: white; font-weight: bold; cursor: pointer; border: none; padding: 10px; text-transform: uppercase; font-size: 11px; }
-
-        @media print { .no-print { display: none; } .container { box-shadow: none; border: none; padding: 0; } .btn-del { display: none; } }
+        .form-panel { margin-top: 30px; padding: 15px; border: 1px dashed #aaa; background: #fdfdfd; }
+        .form-row { display: flex; flex-direction: column; gap: 10px; }
+        @media (min-width: 800px) { .form-row { flex-direction: row; align-items: flex-end; } }
+        .field { display: flex; flex-direction: column; flex: 1; }
+        label { font-size: 9px; font-weight: bold; text-transform: uppercase; margin-bottom: 4px; color: var(--dark); }
+        input, select { padding: 10px; border: 1px solid #aaa; border-radius: 0; font-size: 13px; width: 100%; box-sizing: border-box; }
+        button { background: var(--loss); color: white; font-weight: bold; cursor: pointer; border: none; padding: 12px; text-transform: uppercase; font-size: 12px; width: 100%; }
+        @media (min-width: 800px) { button { width: auto; } }
+        
+        .breakdown-box { background: #f8f9fa; padding: 12px; border: 1px solid #ddd; margin-top: 10px; font-size: 10px; color: #333; }
+        .breakdown-box strong { color: var(--loss); }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Dictamen de Auditoría y Gestión de Albaranes</h1>
-    <div class="subtitle">Auditoría Operativa Forense | El Hortelano</div>
+    <h1>Auditoría y Gestión</h1>
+    <div class="subtitle">El Hortelano | Vista Adaptable</div>
     
     <div class="setup-panel">
-        <div>
-            <label>Índice de Merma (Suciedad/Desecho):</label>
-            <input type="number" id="cfgMerma" value="20" onchange="renderTables()"> %
+        <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+            <label>Índice de Merma (%):</label>
+            <input type="number" id="cfgMerma" value="20" onchange="renderTables()">
         </div>
-        <div style="font-size: 11px; color: #555; text-align: right;">
-            Cálculo dinámico basado en proporciones netas:<br>
+        <div class="setup-desc">
             <strong>Gazpacho:</strong> 35L / 24kg limpia | <strong>Salmorejo:</strong> 24kg / 24kg limpia
         </div>
     </div>
@@ -62,37 +71,44 @@
     <div class="grid">
         <div>
             <div class="section-title">Recepción de Tomate Bruto</div>
-            <table id="tableIn">
-                <thead><tr><th>Fecha</th><th>Ref. Albarán</th><th style="text-align: right;">Masa</th><th class="no-print">Gestión</th></tr></thead>
-                <tbody></tbody>
-            </table>
+            <div class="table-wrapper">
+                <table id="tableIn">
+                    <thead><tr><th>Fecha</th><th>Ref. Albarán</th><th style="text-align: right;">Masa</th><th class="no-print">Gestión</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div class="breakdown-box" id="boxIn"></div>
         </div>
 
         <div>
-            <div class="section-title">Expedición de Producto Terminado</div>
-            <table id="tableOut">
-                <thead><tr><th>Fecha</th><th>Clase</th><th style="text-align: right;">Cant.</th><th style="text-align: right;">Subtotal</th><th class="no-print">Gestión</th></tr></thead>
-                <tbody></tbody>
-            </table>
+            <div class="section-title">Expedición Producto Terminado</div>
+            <div class="table-wrapper">
+                <table id="tableOut">
+                    <thead><tr><th>Fecha</th><th>Clase</th><th style="text-align: right;">Cant.</th><th style="text-align: right;">Subtotal</th><th class="no-print">Gestión</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div class="breakdown-box" id="boxOut"></div>
         </div>
     </div>
 
     <div class="kpi-grid">
-        <div class="kpi-card"><small>Tomate Limpio Real</small><span id="kpiLimpio">0.00 kg</span></div>
-        <div class="kpi-card"><small>Tomate Exigido (Consumo)</small><span id="kpiConsumo">0.00 kg</span></div>
-        <div class="kpi-card" id="cardBal"><small>Balance Inventario</small><span id="kpiBalance">0.00 kg</span></div>
-        <div class="kpi-card"><small>Merma (Desecho)</small><span id="kpiBasura" style="color:#666;">0.00 kg</span></div>
+        <div class="kpi-card"><small>Limpio Real</small><span id="kpiLimpio">0.00</span></div>
+        <div class="kpi-card"><small>Exigido (Consumo)</small><span id="kpiConsumo">0.00</span></div>
+        <div class="kpi-card" id="cardBal"><small>Balance Inventario</small><span id="kpiBalance">0.00</span></div>
+        <div class="kpi-card"><small>Merma (Basura)</small><span id="kpiBasura" style="color:#666;">0.00</span></div>
         <div class="kpi-card kpi-dark"><small>Liquidación Total</small><span id="kpiCash">0.00 €</span></div>
     </div>
 
     <div class="form-panel no-print">
+        <div class="section-title" style="background: transparent; color: var(--dark); border-bottom: 2px solid var(--dark); padding: 0 0 10px 0; margin-bottom: 15px;">Nuevos Asientos</div>
         <div class="form-row">
             <div class="field"><label>Fecha</label><input type="date" id="fDate"></div>
             <div class="field"><label>Operación</label>
                 <select id="fType">
-                    <option value="IN">ENTRADA: Tomate (kg)</option>
-                    <option value="GAZ">SALIDA: Gazpacho (L)</option>
-                    <option value="SAL">SALIDA: Salmorejo (kg)</option>
+                    <option value="IN">[+] Tomate (kg)</option>
+                    <option value="GAZ">[-] Gazpacho (L)</option>
+                    <option value="SAL">[-] Salmorejo (kg)</option>
                 </select>
             </div>
             <div class="field"><label>Ref / Formato</label><input type="text" id="fRef"></div>
@@ -102,8 +118,8 @@
         </div>
     </div>
     
-    <div style="margin-top: 20px; text-align: right;">
-        <button onclick="window.print()" class="no-print" style="padding: 10px 20px; cursor:pointer;">IMPRIMIR / PDF</button>
+    <div style="margin-top: 20px; text-align: center;">
+        <button onclick="window.print()" class="no-print" style="padding: 12px 20px; width: 100%; border: 2px solid #111; background: transparent; color: #111; font-weight: bold; text-transform: uppercase;">Exportar a PDF</button>
     </div>
 </div>
 
@@ -116,12 +132,12 @@
     ];
     
     let outData = [
-        {date: '20/03/2026', type: 'GAZ', ref: 'Suministro', qty: 2.00, price: 2.20},
-        {date: '20/03/2026', type: 'SAL', ref: 'Suministro', qty: 2.00, price: 2.75},
+        {date: '20/03/2026', type: 'GAZ', ref: 'Sumin.', qty: 2.00, price: 2.20},
+        {date: '20/03/2026', type: 'SAL', ref: 'Sumin.', qty: 2.00, price: 2.75},
         {date: '28/03/2026', type: 'GAZ', ref: 'S/C', qty: 2.00, price: 0.00},
         {date: '02/04/2026', type: 'GAZ', ref: 'Garrafas', qty: 110.00, price: 2.20},
-        {date: '16/04/2026', type: 'GAZ', ref: 'Suministro', qty: 20.00, price: 2.20},
-        {date: '16/04/2026', type: 'SAL', ref: 'Suministro', qty: 9.00, price: 2.75},
+        {date: '16/04/2026', type: 'GAZ', ref: 'Sumin.', qty: 20.00, price: 2.20},
+        {date: '16/04/2026', type: 'SAL', ref: 'Sumin.', qty: 9.00, price: 2.75},
         {date: '22/04/2026', type: 'GAZ', ref: 'Garrafas', qty: 10.00, price: 2.20},
         {date: '24/04/2026', type: 'GAZ', ref: '10 Garrafas 5L', qty: 50.00, price: 2.20}
     ];
@@ -134,9 +150,8 @@
         let tBruto = 0;
         inData.forEach((r, i) => {
             tBruto += r.qty;
-            const tr = tbIn.insertRow();
-            tr.innerHTML = `<td>${r.date}</td><td>${r.ref}</td><td class="num">${fmt(r.qty)} kg</td>
-                            <td class="no-print"><button class="btn-del" onclick="delIn(${i})">Borrar</button></td>`;
+            tbIn.innerHTML += `<tr><td>${r.date}</td><td>${r.ref}</td><td class="num">${fmt(r.qty)}</td>
+                               <td class="no-print"><button class="btn-del" onclick="delIn(${i})">X</button></td></tr>`;
         });
 
         const tbOut = document.getElementById('tableOut').tBodies[0];
@@ -146,10 +161,9 @@
             const sub = r.qty * r.price;
             tEur += sub;
             if(r.type === 'GAZ') vGaz += r.qty; else kSalm += r.qty;
-            const tr = tbOut.insertRow();
-            tr.innerHTML = `<td>${r.date}</td><td><strong>${r.type}</strong> <small>[${r.ref}]</small></td>
-                            <td class="num">${fmt(r.qty)}</td><td class="num">${fmt(sub)} €</td>
-                            <td class="no-print"><button class="btn-del" onclick="delOut(${i})">Borrar</button></td>`;
+            tbOut.innerHTML += `<tr><td>${r.date}</td><td><strong>${r.type}</strong> <small>[${r.ref}]</small></td>
+                                <td class="num">${fmt(r.qty)}</td><td class="num">${fmt(sub)}</td>
+                                <td class="no-print"><button class="btn-del" onclick="delOut(${i})">X</button></td></tr>`;
         });
 
         const merma = parseFloat(document.getElementById('cfgMerma').value) / 100;
@@ -157,13 +171,18 @@
         const cons = (vGaz * (24/35)) + (kSalm * 1);
         const bal = tLimpio - cons;
 
+        document.getElementById('boxIn').innerHTML = `Bruto total: <strong>${fmt(tBruto)} kg</strong>`;
+        document.getElementById('boxOut').innerHTML = `Entregado: <strong>${fmt(vGaz)} L</strong> (Gaz) | <strong>${fmt(kSalm)} kg</strong> (Salm)`;
+
         document.getElementById('kpiLimpio').innerText = fmt(tLimpio) + " kg";
         document.getElementById('kpiConsumo').innerText = fmt(cons) + " kg";
         document.getElementById('kpiBasura').innerText = fmt(tBruto * merma) + " kg";
         document.getElementById('kpiCash').innerText = fmt(tEur) + " €";
-        document.getElementById('kpiBalance').innerText = (bal > 0 ? "+" : "") + fmt(bal) + " kg";
+        
+        const bText = document.getElementById('kpiBalance');
+        bText.innerText = (bal > 0 ? "+" : "") + fmt(bal) + " kg";
         document.getElementById('cardBal').style.borderColor = bal < 0 ? "#8b0000" : "#27ae60";
-        document.getElementById('kpiBalance').style.color = bal < 0 ? "#8b0000" : "#27ae60";
+        bText.style.color = bal < 0 ? "#8b0000" : "#27ae60";
     }
 
     function addEntry() {
@@ -172,7 +191,7 @@
         const qty = parseFloat(document.getElementById('fQty').value) || 0;
         const price = parseFloat(document.getElementById('fPrice').value) || 0;
         const ref = document.getElementById('fRef').value || "Manual";
-        if(!date || qty <= 0) return alert("Fecha y cantidad obligatorias");
+        if(!date || qty <= 0) return alert("Fecha y cantidad son requeridas.");
         const fDate = date.split('-').reverse().join('/');
         if(type === 'IN') inData.push({date: fDate, ref: ref, qty: qty});
         else outData.push({date: fDate, type: type, ref: ref, qty: qty, price: price});
