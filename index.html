@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dictamen de Auditoría - El Hortelano (Móvil)</title>
+    <title>Dictamen de Auditoría - El Hortelano (Persistente)</title>
     <style>
         :root { --dark: #111; --accent: #2c3e50; --loss: #8b0000; --gain: #27ae60; --gray: #f4f7f6; }
         body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: var(--gray); padding: 15px; color: var(--dark); margin: 0; }
@@ -32,7 +32,6 @@
 
         .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; border-top: 2px solid var(--dark); padding-top: 20px; }
         @media (min-width: 800px) { .kpi-grid { grid-template-columns: repeat(5, 1fr); gap: 15px; } }
-        @media (max-width: 450px) { .kpi-grid { grid-template-columns: 1fr; } }
         
         .kpi-card { border: 1px solid #ccc; padding: 12px; text-align: center; background: #fff; }
         .kpi-card small { display: block; font-size: 9px; text-transform: uppercase; color: #555; margin-bottom: 5px; font-weight: bold; }
@@ -46,22 +45,23 @@
         label { font-size: 9px; font-weight: bold; text-transform: uppercase; margin-bottom: 4px; color: var(--dark); }
         input, select { padding: 10px; border: 1px solid #aaa; border-radius: 0; font-size: 13px; width: 100%; box-sizing: border-box; }
         button { background: var(--loss); color: white; font-weight: bold; cursor: pointer; border: none; padding: 12px; text-transform: uppercase; font-size: 12px; width: 100%; }
-        @media (min-width: 800px) { button { width: auto; } }
         
         .breakdown-box { background: #f8f9fa; padding: 12px; border: 1px solid #ddd; margin-top: 10px; font-size: 10px; color: #333; }
         .breakdown-box strong { color: var(--loss); }
+        
+        @media print { .no-print { display: none !important; } }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h1>Auditoría y Gestión</h1>
-    <div class="subtitle">El Hortelano | Vista Adaptable</div>
+    <div class="subtitle">El Hortelano | Base de Datos Persistente</div>
     
     <div class="setup-panel">
         <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
             <label>Índice de Merma (%):</label>
-            <input type="number" id="cfgMerma" value="20" onchange="renderTables()">
+            <input type="number" id="cfgMerma" value="20" onchange="updateConfig()">
         </div>
         <div class="setup-desc">
             <strong>Gazpacho:</strong> 35L / 24kg limpia | <strong>Salmorejo:</strong> 24kg / 24kg limpia
@@ -116,6 +116,9 @@
             <div class="field"><label>Precio (€)</label><input type="number" id="fPrice" step="0.01"></div>
             <button class="btn-add" onclick="addEntry()">Anotar Registro</button>
         </div>
+        <div style="margin-top:15px; text-align:right;">
+            <button onclick="clearAllData()" style="background:#555; width:auto; padding:5px 10px; font-size:10px;">Borrar todo (Reiniciar)</button>
+        </div>
     </div>
     
     <div style="margin-top: 20px; text-align: center;">
@@ -124,23 +127,33 @@
 </div>
 
 <script>
-    let inData = [
-        {date: '20/03/2026', ref: '639-914339', qty: 25.45},
-        {date: '01/04/2026', ref: '639-710835', qty: 72.00},
-        {date: '11/04/2026', ref: '639-915316', qty: 20.00},
-        {date: '22/04/2026', ref: '9-915159', qty: 20.50}
+    // CARGA INICIAL DESDE LOCALSTORAGE
+    let inData = JSON.parse(localStorage.getItem('hortelano_in')) || [
+        {date: '20/03/2026', ref: 'Ejemplo 1', qty: 25.45}
     ];
     
-    let outData = [
-        {date: '20/03/2026', type: 'GAZ', ref: 'Sumin.', qty: 2.00, price: 2.20},
-        {date: '20/03/2026', type: 'SAL', ref: 'Sumin.', qty: 2.00, price: 2.75},
-        {date: '28/03/2026', type: 'GAZ', ref: 'S/C', qty: 2.00, price: 0.00},
-        {date: '02/04/2026', type: 'GAZ', ref: 'Garrafas', qty: 110.00, price: 2.20},
-        {date: '16/04/2026', type: 'GAZ', ref: 'Sumin.', qty: 20.00, price: 2.20},
-        {date: '16/04/2026', type: 'SAL', ref: 'Sumin.', qty: 9.00, price: 2.75},
-        {date: '22/04/2026', type: 'GAZ', ref: 'Garrafas', qty: 10.00, price: 2.20},
-        {date: '24/04/2026', type: 'GAZ', ref: '10 Garrafas 5L', qty: 50.00, price: 2.20}
+    let outData = JSON.parse(localStorage.getItem('hortelano_out')) || [
+        {date: '20/03/2026', type: 'GAZ', ref: 'Ejemplo', qty: 2.00, price: 2.20}
     ];
+
+    document.getElementById('cfgMerma').value = localStorage.getItem('hortelano_merma') || 20;
+
+    function saveToDisk() {
+        localStorage.setItem('hortelano_in', JSON.stringify(inData));
+        localStorage.setItem('hortelano_out', JSON.stringify(outData));
+    }
+
+    function updateConfig() {
+        localStorage.setItem('hortelano_merma', document.getElementById('cfgMerma').value);
+        renderTables();
+    }
+
+    function clearAllData() {
+        if(confirm("¿Seguro que quieres borrar TODOS los datos introducidos?")) {
+            localStorage.clear();
+            location.reload();
+        }
+    }
 
     function fmt(n) { return n.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 
@@ -191,15 +204,24 @@
         const qty = parseFloat(document.getElementById('fQty').value) || 0;
         const price = parseFloat(document.getElementById('fPrice').value) || 0;
         const ref = document.getElementById('fRef').value || "Manual";
+        
         if(!date || qty <= 0) return alert("Fecha y cantidad son requeridas.");
+        
         const fDate = date.split('-').reverse().join('/');
+        
         if(type === 'IN') inData.push({date: fDate, ref: ref, qty: qty});
         else outData.push({date: fDate, type: type, ref: ref, qty: qty, price: price});
+        
+        saveToDisk(); // <--- GUARDAR EN MEMORIA
         renderTables();
+        
+        // Limpiar formulario tras añadir
+        document.getElementById('fQty').value = '';
+        document.getElementById('fRef').value = '';
     }
 
-    function delIn(i) { inData.splice(i, 1); renderTables(); }
-    function delOut(i) { outData.splice(i, 1); renderTables(); }
+    function delIn(i) { inData.splice(i, 1); saveToDisk(); renderTables(); }
+    function delOut(i) { outData.splice(i, 1); saveToDisk(); renderTables(); }
 
     renderTables();
 </script>
