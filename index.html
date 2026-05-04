@@ -38,13 +38,38 @@
         .kpi-card span { font-size: 18px; font-weight: bold; font-family: monospace; display: block; }
         .kpi-dark { background: var(--dark); color: #fff; border-color: var(--dark); }
         
-        .form-panel { margin-top: 30px; padding: 15px; border: 1px dashed #aaa; background: #fdfdfd; }
-        .form-row { display: flex; flex-direction: column; gap: 10px; }
-        @media (min-width: 800px) { .form-row { flex-direction: row; align-items: flex-end; } }
-        .field { display: flex; flex-direction: column; flex: 1; }
-        label { font-size: 9px; font-weight: bold; text-transform: uppercase; margin-bottom: 4px; color: var(--dark); }
-        input, select { padding: 10px; border: 1px solid #aaa; border-radius: 0; font-size: 13px; width: 100%; box-sizing: border-box; }
-        button { background: var(--loss); color: white; font-weight: bold; cursor: pointer; border: none; padding: 12px; text-transform: uppercase; font-size: 12px; width: 100%; }
+        /* FORMULARIO MEJORADO */
+        .form-panel { margin-top: 30px; padding: 20px; border: 2px dashed #ccc; background: #fdfdfd; }
+        .form-row { display: flex; flex-direction: column; gap: 15px; }
+        @media (min-width: 800px) { .form-row { flex-direction: row; flex-wrap: wrap; align-items: flex-end; } }
+        .field { display: flex; flex-direction: column; flex: 1 1 180px; }
+        .field label { font-size: 11px; font-weight: bold; text-transform: uppercase; margin-bottom: 6px; color: var(--dark); }
+        
+        input, select { 
+            padding: 12px; 
+            border: 2px solid #ccc; 
+            border-radius: 4px; 
+            font-size: 16px; 
+            width: 100%; 
+            box-sizing: border-box;
+            background: white;
+            transition: border-color 0.2s;
+        }
+        input:focus, select:focus { border-color: var(--loss); outline: none; }
+        
+        button.btn-add { 
+            background: var(--loss); 
+            color: white; 
+            font-weight: bold; 
+            cursor: pointer; 
+            border: none; 
+            padding: 15px 25px; 
+            text-transform: uppercase; 
+            font-size: 14px; 
+            width: 100%;
+            transition: opacity 0.2s;
+        }
+        button.btn-add:hover { opacity: 0.9; }
         
         .breakdown-box { background: #f8f9fa; padding: 12px; border: 1px solid #ddd; margin-top: 10px; font-size: 10px; color: #333; }
         .breakdown-box strong { color: var(--loss); }
@@ -101,33 +126,32 @@
     </div>
 
     <div class="form-panel no-print">
-        <div class="section-title" style="background: transparent; color: var(--dark); border-bottom: 2px solid var(--dark); padding: 0 0 10px 0; margin-bottom: 15px;">Nuevos Asientos</div>
+        <div class="section-title" style="background: transparent; color: var(--dark); border-bottom: 2px solid var(--dark); padding: 0 0 10px 0; margin-bottom: 20px;">Entrada de Nuevos Registros</div>
         <div class="form-row">
-            <div class="field"><label>Fecha</label><input type="date" id="fDate"></div>
-            <div class="field"><label>Operación</label>
+            <div class="field"><label>Fecha de Operación</label><input type="date" id="fDate"></div>
+            <div class="field"><label>Tipo de Operación</label>
                 <select id="fType">
-                    <option value="IN">[+] Tomate (kg)</option>
-                    <option value="GAZ">[-] Gazpacho (L)</option>
-                    <option value="SAL">[-] Salmorejo (kg)</option>
+                    <option value="IN">[+] Recibir Tomate (kg)</option>
+                    <option value="GAZ">[-] Expedir Gazpacho (L)</option>
+                    <option value="SAL">[-] Expedir Salmorejo (kg)</option>
                 </select>
             </div>
-            <div class="field"><label>Ref / Formato</label><input type="text" id="fRef"></div>
-            <div class="field"><label>Cantidad</label><input type="number" id="fQty" step="0.01"></div>
-            <div class="field"><label>Precio (€)</label><input type="number" id="fPrice" step="0.01"></div>
-            <button class="btn-add" onclick="addEntry()">Anotar Registro</button>
+            <div class="field"><label>Referencia / Formato</label><input type="text" id="fRef" placeholder="Ej: Alb-994"></div>
+            <div class="field"><label>Cantidad (L/kg)</label><input type="number" id="fQty" step="0.01" placeholder="0.00"></div>
+            <div class="field"><label>Precio Unitario (€)</label><input type="number" id="fPrice" step="0.01" placeholder="0.00"></div>
+            <button class="btn-add" onclick="addEntry()">Anotar en Auditoría</button>
         </div>
-        <div style="margin-top:15px; text-align:right;">
-            <button onclick="clearAllData()" style="background:#555; width:auto; padding:5px 10px; font-size:10px;">Borrar todo (Reiniciar)</button>
+        <div style="margin-top:20px; text-align:right;">
+            <button onclick="clearAllData()" style="background:#555; width:auto; padding:8px 12px; font-size:10px; opacity: 0.6;">Borrar todo y reiniciar sistema</button>
         </div>
     </div>
     
     <div style="margin-top: 20px; text-align: center;">
-        <button onclick="window.print()" class="no-print" style="padding: 12px 20px; width: 100%; border: 2px solid #111; background: transparent; color: #111; font-weight: bold; text-transform: uppercase;">Exportar a PDF</button>
+        <button onclick="window.print()" class="no-print" style="padding: 15px 20px; width: 100%; border: 2px solid #111; background: transparent; color: #111; font-weight: bold; text-transform: uppercase; cursor:pointer;">Generar Informe PDF</button>
     </div>
 </div>
 
 <script>
-    // CARGA INICIAL DESDE LOCALSTORAGE
     let inData = JSON.parse(localStorage.getItem('hortelano_in')) || [
         {date: '20/03/2026', ref: 'Ejemplo 1', qty: 25.45}
     ];
@@ -149,7 +173,7 @@
     }
 
     function clearAllData() {
-        if(confirm("¿Seguro que quieres borrar TODOS los datos introducidos?")) {
+        if(confirm("¿Seguro que quieres borrar TODOS los datos? Esta acción es definitiva.")) {
             localStorage.clear();
             location.reload();
         }
@@ -199,25 +223,25 @@
     }
 
     function addEntry() {
-        const date = document.getElementById('fDate').value;
+        const dateInput = document.getElementById('fDate').value;
         const type = document.getElementById('fType').value;
         const qty = parseFloat(document.getElementById('fQty').value) || 0;
         const price = parseFloat(document.getElementById('fPrice').value) || 0;
         const ref = document.getElementById('fRef').value || "Manual";
         
-        if(!date || qty <= 0) return alert("Fecha y cantidad son requeridas.");
+        if(!dateInput || qty <= 0) return alert("Fecha y cantidad son obligatorias.");
         
-        const fDate = date.split('-').reverse().join('/');
+        const fDate = dateInput.split('-').reverse().join('/');
         
         if(type === 'IN') inData.push({date: fDate, ref: ref, qty: qty});
         else outData.push({date: fDate, type: type, ref: ref, qty: qty, price: price});
         
-        saveToDisk(); // <--- GUARDAR EN MEMORIA
+        saveToDisk();
         renderTables();
         
-        // Limpiar formulario tras añadir
         document.getElementById('fQty').value = '';
         document.getElementById('fRef').value = '';
+        document.getElementById('fPrice').value = '';
     }
 
     function delIn(i) { inData.splice(i, 1); saveToDisk(); renderTables(); }
