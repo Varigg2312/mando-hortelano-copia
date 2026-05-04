@@ -1,0 +1,66 @@
+/* Busca y reemplaza esta parte en tu <style> */
+.form-panel { 
+    margin-top: 30px; 
+    padding: 20px; 
+    border: 2px dashed #444; 
+    background: #fff; 
+}
+
+.form-row { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 15px; 
+}
+
+@media (min-width: 800px) { 
+    .form-row { 
+        flex-direction: row; 
+        flex-wrap: wrap;
+        align-items: flex-end; 
+    } 
+}
+
+.field { 
+    display: flex; 
+    flex-direction: column; 
+    flex: 1 1 180px; /* Evita que se colapsen */
+}
+
+label { 
+    font-size: 11px; 
+    font-weight: bold; 
+    text-transform: uppercase; 
+    margin-bottom: 6px; 
+    color: var(--dark); 
+}
+
+input, select { 
+    padding: 14px; /* Más grandes y cómodos */
+    border: 2px solid #ccc; 
+    border-radius: 4px; 
+    font-size: 16px; /* Legibilidad total */
+    width: 100%; 
+    box-sizing: border-box; 
+    font-family: inherit;
+    transition: border-color 0.2s;
+}
+
+input:focus, select:focus {
+    border-color: var(--loss);
+    outline: none;
+}
+
+button.btn-add { 
+    background: var(--loss); 
+    color: white; 
+    font-weight: bold; 
+    cursor: pointer; 
+    border: none; 
+    padding: 16px 25px; 
+    text-transform: uppercase; 
+    font-size: 14px; 
+    width: 100%; 
+    transition: background 0.3s;
+}
+
+button.btn-add:hover { background: #660000; }
