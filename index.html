@@ -89,7 +89,7 @@
             <input type="number" id="cfgMerma" value="20" onchange="updateConfig()">
         </div>
         <div class="setup-desc">
-            <strong>Gazpacho:</strong> 35L / 24kg limpia | <strong>Salmorejo:</strong> 24kg / 24kg limpia
+            <strong>Gazpacho:</strong> 1.5L / 1kg limpio | <strong>Salmorejo:</strong> 1kg / 1kg limpio
         </div>
     </div>
 
@@ -205,7 +205,7 @@
 
         const merma = parseFloat(document.getElementById('cfgMerma').value) / 100;
         const tLimpio = tBruto * (1 - merma);
-        const cons = (vGaz * (24/35)) + (kSalm * 1);
+        const cons = (vGaz / 1.5) + kSalm;
         const bal = tLimpio - cons;
 
         document.getElementById('boxIn').innerHTML = `Bruto total: <strong>${fmt(tBruto)} kg</strong>`;
