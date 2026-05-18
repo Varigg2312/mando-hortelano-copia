@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dictamen de Auditoría - El Hortelano (Persistente)</title>
+    <title>Dictamen de Auditoría - El Hortelano (Mermas Dinámicas)</title>
     <style>
         :root { --dark: #111; --accent: #2c3e50; --loss: #8b0000; --gain: #27ae60; --gray: #f4f7f6; }
         body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: var(--gray); padding: 15px; color: var(--dark); margin: 0; }
@@ -38,7 +38,6 @@
         .kpi-card span { font-size: 18px; font-weight: bold; font-family: monospace; display: block; }
         .kpi-dark { background: var(--dark); color: #fff; border-color: var(--dark); }
         
-        /* FORMULARIO MEJORADO */
         .form-panel { margin-top: 30px; padding: 20px; border: 2px dashed #ccc; background: #fdfdfd; }
         .form-row { display: flex; flex-direction: column; gap: 15px; }
         @media (min-width: 800px) { .form-row { flex-direction: row; flex-wrap: wrap; align-items: flex-end; } }
@@ -81,15 +80,15 @@
 
 <div class="container">
     <h1>Auditoría y Gestión</h1>
-    <div class="subtitle">El Hortelano | Base de Datos Persistente</div>
+    <div class="subtitle">El Hortelano | Mermas por Molienda Dinámicas</div>
     
     <div class="setup-panel">
         <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-            <label>Índice de Merma (%):</label>
+            <label>Índice de Merma por Defecto (%):</label>
             <input type="number" id="cfgMerma" value="20" onchange="updateConfig()">
         </div>
         <div class="setup-desc">
-            <strong>Gazpacho:</strong> 1.5L / 1kg limpio | <strong>Salmorejo:</strong> 1kg / 1kg limpio
+            <strong>Proporciones:</strong> Gazpacho: 1.5L / 1kg limpio | Salmorejo: 1kg / 1kg limpio
         </div>
     </div>
 
@@ -98,7 +97,7 @@
             <div class="section-title">Recepción de Tomate Bruto</div>
             <div class="table-wrapper">
                 <table id="tableIn">
-                    <thead><tr><th>Fecha</th><th>Ref. Albarán</th><th style="text-align: right;">Masa</th><th class="no-print">Gestión</th></tr></thead>
+                    <thead><tr><th>Fecha</th><th>Ref. Albarán</th><th style="text-align: right;">Masa Bruta</th><th style="text-align: right;">Merma Lote</th><th class="no-print">Gestión</th></tr></thead>
                     <tbody></tbody>
                 </table>
             </div>
@@ -118,10 +117,10 @@
     </div>
 
     <div class="kpi-grid">
-        <div class="kpi-card"><small>Limpio Real</small><span id="kpiLimpio">0.00</span></div>
-        <div class="kpi-card"><small>Exigido (Consumo)</small><span id="kpiConsumo">0.00</span></div>
-        <div class="kpi-card" id="cardBal"><small>Balance Inventario</small><span id="kpiBalance">0.00</span></div>
-        <div class="kpi-card"><small>Merma (Basura)</small><span id="kpiBasura" style="color:#666;">0.00</span></div>
+        <div class="kpi-card"><small>Limpio Real Total</small><span id="kpiLimpio">0.00 kg</span></div>
+        <div class="kpi-card"><small>Exigido (Consumo)</small><span id="kpiConsumo">0.00 kg</span></div>
+        <div class="kpi-card" id="cardBal"><small>Balance Inventario</small><span id="kpiBalance">0.00 kg</span></div>
+        <div class="kpi-card"><small>Basura Acumulada</small><span id="kpiBasura" style="color:#666;">0.00 kg</span></div>
         <div class="kpi-card kpi-dark"><small>Liquidación Total</small><span id="kpiCash">0.00 €</span></div>
     </div>
 
@@ -130,7 +129,7 @@
         <div class="form-row">
             <div class="field"><label>Fecha de Operación</label><input type="date" id="fDate"></div>
             <div class="field"><label>Tipo de Operación</label>
-                <select id="fType">
+                <select id="fType" onchange="toggleDynamicField()">
                     <option value="IN">[+] Recibir Tomate (kg)</option>
                     <option value="GAZ">[-] Expedir Gazpacho (L)</option>
                     <option value="SAL">[-] Expedir Salmorejo (kg)</option>
@@ -138,7 +137,7 @@
             </div>
             <div class="field"><label>Referencia / Formato</label><input type="text" id="fRef" placeholder="Ej: Alb-994"></div>
             <div class="field"><label>Cantidad (L/kg)</label><input type="number" id="fQty" step="0.01" placeholder="0.00"></div>
-            <div class="field"><label>Precio Unitario (€)</label><input type="number" id="fPrice" step="0.01" placeholder="0.00"></div>
+            <div class="field" id="dynamicFieldWrapper"><label id="dynamicLabel">Merma de esta Molida (%)</label><input type="number" id="fDynamic" step="0.1" placeholder="Vacío usa defecto"></div>
             <button class="btn-add" onclick="addEntry()">Anotar en Auditoría</button>
         </div>
         <div style="margin-top:20px; text-align:right;">
@@ -153,7 +152,7 @@
 
 <script>
     let inData = JSON.parse(localStorage.getItem('hortelano_in')) || [
-        {date: '20/03/2026', ref: 'Ejemplo 1', qty: 25.45}
+        {date: '20/03/2026', ref: 'Ejemplo 1', qty: 25.45, merma: 20}
     ];
     
     let outData = JSON.parse(localStorage.getItem('hortelano_out')) || [
@@ -172,9 +171,24 @@
         renderTables();
     }
 
+    function toggleDynamicField() {
+        const type = document.getElementById('fType').value;
+        const label = document.getElementById('dynamicLabel');
+        const input = document.getElementById('fDynamic');
+        if (type === 'IN') {
+            label.innerText = "Merma de esta Molida (%)";
+            input.placeholder = "Vacío usa defecto";
+        } else {
+            label.innerText = "Precio Unitario (€)";
+            input.placeholder = "0.00";
+        }
+    }
+
     function clearAllData() {
-        if(confirm("¿Seguro que quieres borrar TODOS los datos? Esta acción es definitiva.")) {
-            localStorage.clear();
+        if(confirm("¿Seguro que quieres borrar TODOS los datos de El Hortelano? Esta acción es definitiva.")) {
+            localStorage.removeItem('hortelano_in');
+            localStorage.removeItem('hortelano_out');
+            localStorage.removeItem('hortelano_merma');
             location.reload();
         }
     }
@@ -182,12 +196,22 @@
     function fmt(n) { return n.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 
     function renderTables() {
+        const defaultMerma = parseFloat(document.getElementById('cfgMerma').value) || 20;
+        
         const tbIn = document.getElementById('tableIn').tBodies[0];
         tbIn.innerHTML = '';
-        let tBruto = 0;
+        let tBruto = 0, tLimpioSumado = 0, tBasuraSumada = 0;
+        
         inData.forEach((r, i) => {
             tBruto += r.qty;
-            tbIn.innerHTML += `<tr><td>${r.date}</td><td>${r.ref}</td><td class="num">${fmt(r.qty)}</td>
+            const mermaLote = r.merma !== undefined ? r.merma : defaultMerma;
+            const basuraLote = r.qty * (mermaLote / 100);
+            const limpioLote = r.qty - basuraLote;
+            
+            tLimpioSumado += limpioLote;
+            tBasuraSumada += basuraLote;
+            
+            tbIn.innerHTML += `<tr><td>${r.date}</td><td>${r.ref}</td><td class="num">${fmt(r.qty)} kg</td><td class="num">${fmt(mermaLote)} %</td>
                                <td class="no-print"><button class="btn-del" onclick="delIn(${i})">X</button></td></tr>`;
         });
 
@@ -203,17 +227,15 @@
                                 <td class="no-print"><button class="btn-del" onclick="delOut(${i})">X</button></td></tr>`;
         });
 
-        const merma = parseFloat(document.getElementById('cfgMerma').value) / 100;
-        const tLimpio = tBruto * (1 - merma);
         const cons = (vGaz / 1.5) + kSalm;
-        const bal = tLimpio - cons;
+        const bal = tLimpioSumado - cons;
 
         document.getElementById('boxIn').innerHTML = `Bruto total: <strong>${fmt(tBruto)} kg</strong>`;
         document.getElementById('boxOut').innerHTML = `Entregado: <strong>${fmt(vGaz)} L</strong> (Gaz) | <strong>${fmt(kSalm)} kg</strong> (Salm)`;
 
-        document.getElementById('kpiLimpio').innerText = fmt(tLimpio) + " kg";
+        document.getElementById('kpiLimpio').innerText = fmt(tLimpioSumado) + " kg";
         document.getElementById('kpiConsumo').innerText = fmt(cons) + " kg";
-        document.getElementById('kpiBasura').innerText = fmt(tBruto * merma) + " kg";
+        document.getElementById('kpiBasura').innerText = fmt(tBasuraSumada) + " kg";
         document.getElementById('kpiCash').innerText = fmt(tEur) + " €";
         
         const bText = document.getElementById('kpiBalance');
@@ -226,27 +248,34 @@
         const dateInput = document.getElementById('fDate').value;
         const type = document.getElementById('fType').value;
         const qty = parseFloat(document.getElementById('fQty').value) || 0;
-        const price = parseFloat(document.getElementById('fPrice').value) || 0;
+        const dynamicVal = parseFloat(document.getElementById('fDynamic').value);
         const ref = document.getElementById('fRef').value || "Manual";
         
         if(!dateInput || qty <= 0) return alert("Fecha y cantidad son obligatorias.");
         
         const fDate = dateInput.split('-').reverse().join('/');
         
-        if(type === 'IN') inData.push({date: fDate, ref: ref, qty: qty});
-        else outData.push({date: fDate, type: type, ref: ref, qty: qty, price: price});
+        if(type === 'IN') {
+            const defaultMerma = parseFloat(document.getElementById('cfgMerma').value) || 20;
+            const mermaEspecifica = isNaN(dynamicVal) ? defaultMerma : dynamicVal;
+            inData.push({date: fDate, ref: ref, qty: qty, merma: mermaEspecifica});
+        } else {
+            const price = isNaN(dynamicVal) ? 0 : dynamicVal;
+            outData.push({date: fDate, type: type, ref: ref, qty: qty, price: price});
+        }
         
         saveToDisk();
         renderTables();
         
         document.getElementById('fQty').value = '';
         document.getElementById('fRef').value = '';
-        document.getElementById('fPrice').value = '';
+        document.getElementById('fDynamic').value = '';
     }
 
     function delIn(i) { inData.splice(i, 1); saveToDisk(); renderTables(); }
     function delOut(i) { outData.splice(i, 1); saveToDisk(); renderTables(); }
 
+    toggleDynamicField();
     renderTables();
 </script>
 </body>
