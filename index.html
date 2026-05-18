@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dictamen de Auditoría - El Hortelano (Mermas Dinámicas)</title>
+    <title>Dictamen de Auditoría - El Hortelano (Merma en Salidas)</title>
     <style>
         :root { --dark: #111; --accent: #2c3e50; --loss: #8b0000; --gain: #27ae60; --gray: #f4f7f6; }
         body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: var(--gray); padding: 15px; color: var(--dark); margin: 0; }
@@ -80,7 +80,7 @@
 
 <div class="container">
     <h1>Auditoría y Gestión</h1>
-    <div class="subtitle">El Hortelano | Mermas por Molienda Dinámicas</div>
+    <div class="subtitle">El Hortelano | Mermas Aplicadas en Expedición</div>
     
     <div class="setup-panel">
         <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
@@ -88,7 +88,7 @@
             <input type="number" id="cfgMerma" value="20" onchange="updateConfig()">
         </div>
         <div class="setup-desc">
-            <strong>Proporciones:</strong> Gazpacho: 1.5L / 1kg limpio | Salmorejo: 1kg / 1kg limpio
+            <strong>Ratios Base (Sin Merma):</strong> Gazpacho: 1.5L por 1kg neto | Salmorejo: 1kg por 1kg neto
         </div>
     </div>
 
@@ -97,7 +97,7 @@
             <div class="section-title">Recepción de Tomate Bruto</div>
             <div class="table-wrapper">
                 <table id="tableIn">
-                    <thead><tr><th>Fecha</th><th>Ref. Albarán</th><th style="text-align: right;">Masa Bruta</th><th style="text-align: right;">Merma Lote</th><th class="no-print">Gestión</th></tr></thead>
+                    <thead><tr><th>Fecha</th><th>Ref. Albarán</th><th style="text-align: right;">Masa Bruta</th><th class="no-print">Gestión</th></tr></thead>
                     <tbody></tbody>
                 </table>
             </div>
@@ -108,7 +108,7 @@
             <div class="section-title">Expedición Producto Terminado</div>
             <div class="table-wrapper">
                 <table id="tableOut">
-                    <thead><tr><th>Fecha</th><th>Clase</th><th style="text-align: right;">Cant.</th><th style="text-align: right;">Subtotal</th><th class="no-print">Gestión</th></tr></thead>
+                    <thead><tr><th>Fecha</th><th>Clase</th><th style="text-align: right;">Cant.</th><th style="text-align: right;">Merma Proc.</th><th class="no-print">Gestión</th></tr></thead>
                     <tbody></tbody>
                 </table>
             </div>
@@ -117,11 +117,11 @@
     </div>
 
     <div class="kpi-grid">
-        <div class="kpi-card"><small>Limpio Real Total</small><span id="kpiLimpio">0.00 kg</span></div>
-        <div class="kpi-card"><small>Exigido (Consumo)</small><span id="kpiConsumo">0.00 kg</span></div>
+        <div class="kpi-card"><small>Tomate Stock Bruto</small><span id="kpiLimpio">0.00 kg</span></div>
+        <div class="kpi-card"><small>Tomate Consumido Total</small><span id="kpiConsumo">0.00 kg</span></div>
         <div class="kpi-card" id="cardBal"><small>Balance Inventario</small><span id="kpiBalance">0.00 kg</span></div>
-        <div class="kpi-card"><small>Basura Acumulada</small><span id="kpiBasura" style="color:#666;">0.00 kg</span></div>
-        <div class="kpi-card kpi-dark"><small>Liquidación Total</small><span id="kpiCash">0.00 €</span></div>
+        <div class="kpi-card"><small>Total Desperdicio</small><span id="kpiBasura" style="color:#666;">0.00 kg</span></div>
+        <div class="kpi-card kpi-dark"><small>Unidades Totales</small><span id="kpiCash">0.00 Unid.</span></div>
     </div>
 
     <div class="form-panel no-print">
@@ -137,7 +137,7 @@
             </div>
             <div class="field"><label>Referencia / Formato</label><input type="text" id="fRef" placeholder="Ej: Alb-994"></div>
             <div class="field"><label>Cantidad (L/kg)</label><input type="number" id="fQty" step="0.01" placeholder="0.00"></div>
-            <div class="field" id="dynamicFieldWrapper"><label id="dynamicLabel">Merma de esta Molida (%)</label><input type="number" id="fDynamic" step="0.1" placeholder="Vacío usa defecto"></div>
+            <div class="field" id="dynamicFieldWrapper" style="display:none;"><label id="dynamicLabel">Merma de esta Elaboración (%)</label><input type="number" id="fDynamic" step="0.1" placeholder="Vacio usa defecto"></div>
             <button class="btn-add" onclick="addEntry()">Anotar en Auditoría</button>
         </div>
         <div style="margin-top:20px; text-align:right;">
@@ -151,13 +151,8 @@
 </div>
 
 <script>
-    let inData = JSON.parse(localStorage.getItem('hortelano_in')) || [
-        {date: '20/03/2026', ref: 'Ejemplo 1', qty: 25.45, merma: 20}
-    ];
-    
-    let outData = JSON.parse(localStorage.getItem('hortelano_out')) || [
-        {date: '20/03/2026', type: 'GAZ', ref: 'Ejemplo', qty: 2.00, price: 2.20}
-    ];
+    let inData = JSON.parse(localStorage.getItem('hortelano_in')) || [];
+    let outData = JSON.parse(localStorage.getItem('hortelano_out')) || [];
 
     document.getElementById('cfgMerma').value = localStorage.getItem('hortelano_merma') || 20;
 
@@ -173,14 +168,17 @@
 
     function toggleDynamicField() {
         const type = document.getElementById('fType').value;
+        const wrapper = document.getElementById('dynamicFieldWrapper');
         const label = document.getElementById('dynamicLabel');
         const input = document.getElementById('fDynamic');
+        
         if (type === 'IN') {
-            label.innerText = "Merma de esta Molida (%)";
-            input.placeholder = "Vacío usa defecto";
+            wrapper.style.display = 'none';
+            input.value = '';
         } else {
-            label.innerText = "Precio Unitario (€)";
-            input.placeholder = "0.00";
+            wrapper.style.display = 'flex';
+            label.innerText = "Merma de esta Elaboración (%)";
+            input.placeholder = "Vacío usa defecto";
         }
     }
 
@@ -200,43 +198,49 @@
         
         const tbIn = document.getElementById('tableIn').tBodies[0];
         tbIn.innerHTML = '';
-        let tBruto = 0, tLimpioSumado = 0, tBasuraSumada = 0;
+        let tBruto = 0;
         
         inData.forEach((r, i) => {
             tBruto += r.qty;
-            const mermaLote = r.merma !== undefined ? r.merma : defaultMerma;
-            const basuraLote = r.qty * (mermaLote / 100);
-            const limpioLote = r.qty - basuraLote;
-            
-            tLimpioSumado += limpioLote;
-            tBasuraSumada += basuraLote;
-            
-            tbIn.innerHTML += `<tr><td>${r.date}</td><td>${r.ref}</td><td class="num">${fmt(r.qty)} kg</td><td class="num">${fmt(mermaLote)} %</td>
+            tbIn.innerHTML += `<tr><td>${r.date}</td><td>${r.ref}</td><td class="num">${fmt(r.qty)} kg</td>
                                <td class="no-print"><button class="btn-del" onclick="delIn(${i})">X</button></td></tr>`;
         });
 
         const tbOut = document.getElementById('tableOut').tBodies[0];
         tbOut.innerHTML = '';
-        let vGaz = 0, kSalm = 0, tEur = 0;
+        let vGaz = 0, kSalm = 0, tConsumoSumado = 0, tBasuraSumada = 0, totalUnidades = 0;
+        
         outData.forEach((r, i) => {
-            const sub = r.qty * r.price;
-            tEur += sub;
+            totalUnidades += r.qty;
             if(r.type === 'GAZ') vGaz += r.qty; else kSalm += r.qty;
+            
+            // Cálculo del coste base en tomate limpio (1.5L por kg en gazpacho, 1kg por 1kg en salmorejo)
+            const tomateNetoNecesario = r.type === 'GAZ' ? (r.qty / 1.5) : r.qty;
+            
+            // La merma se aplica sobre el proceso de extracción
+            const mermaProceso = r.merma !== undefined ? r.merma : defaultMerma;
+            
+            // Si la merma es del X%, el tomate neto representa el (100 - X)% del tomate bruto usado
+            const tomateBrutoConsumido = tomateNetoNecesario / (1 - (mermaProceso / 100));
+            const basuraGenerada = tomateBrutoConsumido - tomateNetoNecesario;
+            
+            tConsumoSumado += tomateBrutoConsumido;
+            tBasuraSumada += basuraGenerada;
+            
             tbOut.innerHTML += `<tr><td>${r.date}</td><td><strong>${r.type}</strong> <small>[${r.ref}]</small></td>
-                                <td class="num">${fmt(r.qty)}</td><td class="num">${fmt(sub)}</td>
+                                <td class="num">${fmt(r.qty)}</td><td class="num">${fmt(mermaProceso)} %</td>
                                 <td class="no-print"><button class="btn-del" onclick="delOut(${i})">X</button></td></tr>`;
         });
 
-        const cons = (vGaz / 1.5) + kSalm;
-        const bal = tLimpioSumado - cons;
+        const bal = tBruto - tConsumoSumado;
 
-        document.getElementById('boxIn').innerHTML = `Bruto total: <strong>${fmt(tBruto)} kg</strong>`;
-        document.getElementById('boxOut').innerHTML = `Entregado: <strong>${fmt(vGaz)} L</strong> (Gaz) | <strong>${fmt(kSalm)} kg</strong> (Salm)`;
+        document.getElementById('boxIn').innerHTML = `Tomate total ingresado: <strong>${fmt(tBruto)} kg</strong>`;
+        document.getElementById('boxOut').innerHTML = `Producción neta: <strong>${fmt(vGaz)} L</strong> (Gaz) | <strong>${fmt(kSalm)} kg</strong> (Salm)`;
 
-        document.getElementById('kpiLimpio').innerText = fmt(tLimpioSumado) + " kg";
-        document.getElementById('kpiConsumo').innerText = fmt(cons) + " kg";
+        document.getElementById('kpiLimpio').innerText = fmt(tBruto) + " kg";
+        document.getElementById('kpiConsumo').innerText = fmt(tConsumoSumado) + " kg";
         document.getElementById('kpiBasura').innerText = fmt(tBasuraSumada) + " kg";
-        document.getElementById('kpiCash').innerText = fmt(tEur) + " €";
+        document.getElementById('kpiCash').innerText = fmt(totalUnidades);
         
         const bText = document.getElementById('kpiBalance');
         bText.innerText = (bal > 0 ? "+" : "") + fmt(bal) + " kg";
@@ -256,12 +260,11 @@
         const fDate = dateInput.split('-').reverse().join('/');
         
         if(type === 'IN') {
+            inData.push({date: fDate, ref: ref, qty: qty});
+        } else {
             const defaultMerma = parseFloat(document.getElementById('cfgMerma').value) || 20;
             const mermaEspecifica = isNaN(dynamicVal) ? defaultMerma : dynamicVal;
-            inData.push({date: fDate, ref: ref, qty: qty, merma: mermaEspecifica});
-        } else {
-            const price = isNaN(dynamicVal) ? 0 : dynamicVal;
-            outData.push({date: fDate, type: type, ref: ref, qty: qty, price: price});
+            outData.push({date: fDate, type: type, ref: ref, qty: qty, merma: mermaEspecifica});
         }
         
         saveToDisk();
