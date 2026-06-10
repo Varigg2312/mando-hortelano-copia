@@ -11,11 +11,13 @@
         h1 { text-align: center; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-top: 0; color: var(--loss); font-size: 1.5rem; }
         .subtitle { text-align: center; font-size: 11px; text-transform: uppercase; color: #555; font-weight: bold; margin-bottom: 20px; }
         
+        /* Panel de Configuración Superior */
         .setup-panel { background: #fff9f9; padding: 15px; border: 1px solid #ccc; border-left: 5px solid var(--loss); margin-bottom: 20px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 15px; }
         .setup-panel label { font-weight: bold; font-size: 12px; text-transform: uppercase; }
         .setup-panel input { padding: 8px; font-size: 14px; font-family: monospace; font-weight: bold; width: 60px; text-align: right; border: 1px solid #aaa; }
         .setup-desc { font-size: 11px; color: #555; flex: 1 1 100%; }
         
+        /* Estructura de Tablas */
         .grid { display: grid; grid-template-columns: 1fr; gap: 30px; }
         @media (min-width: 800px) { .grid { grid-template-columns: 1fr 1.3fr; } }
         
@@ -30,6 +32,7 @@
         .btn-del { background: none; border: 1px solid #ddd; color: #aaa; cursor: pointer; padding: 4px 8px; font-size: 9px; text-transform: uppercase; transition: 0.2s; }
         .btn-del:hover { background: var(--loss); color: white; border-color: var(--loss); }
 
+        /* Tarjetas de Indicadores KPI */
         .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; border-top: 2px solid var(--dark); padding-top: 20px; }
         @media (min-width: 800px) { .kpi-grid { grid-template-columns: repeat(3, 1fr); gap: 15px; } }
         
@@ -39,23 +42,57 @@
         .kpi-dark { background: var(--dark); color: #fff; border-color: var(--dark); }
         .kpi-accent { background: var(--accent); color: #fff; border-color: var(--accent); }
         
-        .form-panel { margin-top: 30px; padding: 20px; border: 2px dashed #ccc; background: #fdfdfd; }
-        .form-row { display: flex; flex-direction: column; gap: 15px; }
-        @media (min-width: 800px) { .form-row { flex-direction: row; flex-wrap: wrap; align-items: flex-end; } }
-        .field { display: flex; flex-direction: column; flex: 1 1 180px; }
-        .field label { font-size: 11px; font-weight: bold; text-transform: uppercase; margin-bottom: 6px; color: var(--dark); }
+        /* Panel de Formulario Aislado (Tu código corregido y escudado) */
+        .form-panel { 
+            margin-top: 30px; 
+            padding: 20px; 
+            border: 2px dashed #444; 
+            background: #fff; 
+        }
         
-        input, select { 
-            padding: 12px; 
+        .form-row { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 15px; 
+        }
+        
+        @media (min-width: 800px) { 
+            .form-row { 
+                flex-direction: row; 
+                flex-wrap: wrap;
+                align-items: flex-end; 
+            } 
+        }
+        
+        .field { 
+            display: flex; 
+            flex-direction: column; 
+            flex: 1 1 180px; 
+        }
+        
+        .form-panel label { 
+            font-size: 11px; 
+            font-weight: bold; 
+            text-transform: uppercase; 
+            margin-bottom: 6px; 
+            color: var(--dark); 
+        }
+        
+        .form-panel input, .form-panel select { 
+            padding: 14px; 
             border: 2px solid #ccc; 
             border-radius: 4px; 
             font-size: 16px; 
             width: 100%; 
-            box-sizing: border-box;
-            background: white;
+            box-sizing: border-box; 
+            font-family: inherit;
             transition: border-color 0.2s;
         }
-        input:focus, select:focus { border-color: var(--loss); outline: none; }
+        
+        .form-panel input:focus, .form-panel select:focus {
+            border-color: var(--loss);
+            outline: none;
+        }
         
         button.btn-add { 
             background: var(--loss); 
@@ -63,13 +100,14 @@
             font-weight: bold; 
             cursor: pointer; 
             border: none; 
-            padding: 15px 25px; 
+            padding: 16px 25px; 
             text-transform: uppercase; 
             font-size: 14px; 
-            width: 100%;
-            transition: opacity 0.2s;
+            width: 100%; 
+            transition: background 0.3s;
         }
-        button.btn-add:hover { opacity: 0.9; }
+        
+        button.btn-add:hover { background: #660000; }
         
         .breakdown-box { background: #f8f9fa; padding: 12px; border: 1px solid #ddd; margin-top: 10px; font-size: 10px; color: #333; }
         .breakdown-box strong { color: var(--loss); }
@@ -219,13 +257,8 @@
                 kSalm += r.qty;
             }
             
-            // Cálculo del coste base en tomate limpio (1.5L por kg en gazpacho, 1kg por 1kg en salmorejo)
             const tomateNetoNecesario = r.type === 'GAZ' ? (r.qty / 1.5) : r.qty;
-            
-            // La merma se aplica sobre el proceso de extracción
             const mermaProceso = r.merma !== undefined && r.merma !== null && !isNaN(r.merma) ? r.merma : defaultMerma;
-            
-            // Si la merma es del X%, el tomate neto representa el (100 - X)% del tomate bruto usado
             const tomateBrutoConsumido = tomateNetoNecesario / (1 - (mermaProceso / 100));
             const basuraGenerada = tomateBrutoConsumido - tomateNetoNecesario;
             
