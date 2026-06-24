@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auditoría de Mermas — El Hortelano</title>
+    <style>
+        :root {
+            --dark: #111;
+            --accent: #2c3e50;
+            --loss: #8b0000;
+            --gain: #27ae60;
+            --warn: #e67e22;
+            --gray: #f4f7f6;
+            --border: #e0e0e0;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: var(--gray); padding: 15px; color: var(--dark); }
+
+        .container { max-width: 1300px; margin: auto; background: #fff; padding: 25px; border-top: 8px solid var(--loss); box-shadow: 0 4px 20px rgba(0,0,0,0.12); }
+
+        /* HEADER */
+        .app-header { text-align: center; border-bottom: 2px solid var(--border); padding-bottom: 15px; margin-bottom: 20px; }
+        .app-header h1 { text-transform: uppercase; letter-spacing: 1px; color: var(--loss); font-size: 1.4rem; margin-bottom: 4px; }
+        .app-header .subtitle { font-size: 11px; text-transform: uppercase; color: #777; font-weight: bold; letter-spacing: 0.5px; }
+
+        /* CONFIG */
+        .setup-panel { background: #fff9f9; padding: 12px 16px; border: 1px solid #ddd; border-left: 5px solid var(--loss); margin-bottom: 20px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+        .setup-panel label { font-weight: bold; font-size: 12px; text-transform: uppercase; }
+        .setup-panel input[type="number"] { padding: 8px; font-size: 14px; font-family: monospace; font-weight: bold; width: 70px; text-align: right; border: 1px solid #aaa; border-radius: 3px; }
+        .setup-desc { font-size: 11px; color: #555; flex: 1 1 100%; }
+
+        /* KPI */
+        .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+        @media (max-width: 600px) { .kpi-grid { grid-template-columns: 1fr 1fr; } }
+        .kpi-card { border: 1px solid #ddd; padding: 14px 10px; text-align: center; background: #fff; border-radius: 4px; transition: border-color 0.3s, background 0.3s; }
+        .kpi-card small { display: block; font-size: 9px; text-transform: uppercase; color: #777; margin-bottom: 6px; font-weight: bold; letter-spacing: 0.3px; }
+        .kpi-card span { font-size: 1.4rem; font-weight: bold; font-family: monospace; display: block; }
+        .kpi-dark   { background: var(--dark);   color: #fff; border-color: var(--dark); }
+        .kpi-accent { background: var(--accent);  color: #fff; border-color: var(--accent); }
+        .kpi-gain   { background: #eafaf1; border-color: var(--gain); }
+        .kpi-loss   { background: #fdf2f2; border-color: var(--loss); }
+
+        /* CHART */
+        .chart-section { margin-bottom: 25px; border: 1px solid var(--border); border-radius: 4px; padding: 15px; }
+        .chart-title { font-size: 11px; text-transform: uppercase; font-weight: bold; color: #555; margin-bottom: 10px; letter-spacing: 0.5px; }
+        .chart-section canvas { max-height: 190px; }
+        .chart-empty { text-align: center; padding: 30px; color: #bbb; font-size: 11px; text-transform: uppercase; }
+
+        /* TABLES */
+        .grid { display: grid; grid-template-columns: 1fr; gap: 25px; margin-bottom: 25px; }
+        @media (min-width: 800px) { .grid { grid-template-columns: 1fr 1.3fr; } }
+
+        .section-title { font-size: 12px; text-transform: uppercase; font-weight: bold; background: var(--dark); color: #fff; padding: 10px 12px; display: flex; justify-content: space-between; align-items: center; }
+        .section-title .badge { font-size: 10px; background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 10px; font-weight: normal; }
+
+        .table-wrapper { width: 100%; overflow-x: auto; border: 1px solid #eee; border-top: none; margin-bottom: 0; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; min-width: 380px; }
+        th { background: #f5f5f5; color: #555; padding: 9px 8px; text-align: left; text-transform: uppercase; font-size: 9px; border-bottom: 2px solid #ddd; white-space: nowrap; }
+        td { padding: 9px 8px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: #fafafa; }
+        .num { font-family: monospace; font-size: 11px; font-weight: bold; text-align: right; }
+        .right { text-align: right; }
+        .td-merma-ok   { color: var(--gain); font-weight: bold; }
+        .td-merma-warn { color: var(--warn); font-weight: bold; }
+        .td-merma-bad  { color: var(--loss); font-weight: bold; background: #fff5f5; }
+
+        .btn-del { background: none; border: 1px solid #ddd; color: #bbb; cursor: pointer; padding: 3px 7px; font-size: 9px; text-transform: uppercase; transition: 0.2s; border-radius: 2px; }
+        .btn-del:hover { background: var(--loss); color: white; border-color: var(--loss); }
+
+        .breakdown-box { background: #f8f9fa; padding: 10px 12px; border: 1px solid #eee; border-top: none; font-size: 10px; color: #444; min-height: 36px; }
+        .breakdown-box strong { color: var(--loss); }
+        .empty-state { text-align: center; padding: 25px; color: #ccc; font-size: 11px; text-transform: uppercase; }
+
+        /* FORM */
+        .form-panel { border: 2px dashed #ccc; padding: 20px; margin-bottom: 20px; border-radius: 4px; }
+        .form-panel-title { font-size: 12px; text-transform: uppercase; font-weight: bold; border-bottom: 2px solid var(--dark); padding-bottom: 10px; margin-bottom: 18px; }
+        .form-row { display: flex; flex-direction: column; gap: 12px; }
+        @media (min-width: 800px) { .form-row { flex-direction: row; flex-wrap: wrap; align-items: flex-end; } }
+        .field { display: flex; flex-direction: column; flex: 1 1 160px; }
+        .field label { font-size: 10px; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; color: #555; }
+        .field input, .field select { padding: 12px; border: 2px solid #ddd; border-radius: 4px; font-size: 15px; font-family: inherit; transition: border-color 0.2s; width: 100%; box-sizing: border-box; }
+        .field input:focus, .field select:focus { border-color: var(--loss); outline: none; }
+        .btn-add { background: var(--loss); color: white; font-weight: bold; cursor: pointer; border: none; padding: 14px 20px; text-transform: uppercase; font-size: 13px; flex: 1 1 160px; align-self: flex-end; border-radius: 4px; transition: background 0.2s; }
+        .btn-add:hover { background: #660000; }
+
+        /* ACTION BAR */
+        .action-bar { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+        @media (max-width: 600px) { .action-bar { grid-template-columns: 1fr; } }
+        .btn-action { padding: 14px; border: 2px solid; font-weight: bold; text-transform: uppercase; font-size: 11px; cursor: pointer; border-radius: 4px; transition: 0.2s; text-align: center; background: transparent; }
+        .btn-print  { border-color: var(--dark);   color: var(--dark); }
+        .btn-print:hover  { background: var(--dark);   color: white; }
+        .btn-export { border-color: #16a085; color: #16a085; }
+        .btn-export:hover { background: #16a085; color: white; }
+        .btn-import { border-color: #7f8c8d; color: #7f8c8d; }
+        .btn-import:hover { background: #7f8c8d; color: white; }
+        .btn-import label { cursor: pointer; display: block; }
+
+        .btn-danger { background: none; border: none; color: #bbb; font-size: 10px; cursor: pointer; text-decoration: underline; display: block; margin-top: 8px; text-align: right; }
+        .btn-danger:hover { color: var(--loss); }
+
+        /* TOASTS */
+        #toast-container { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 8px; align-items: center; width: 90%; max-width: 450px; pointer-events: none; }
+        .toast { width: 100%; padding: 12px 18px; border-radius: 6px; font-size: 13px; font-weight: bold; text-align: center; color: white; background: var(--dark); box-shadow: 0 4px 12px rgba(0,0,0,0.2); opacity: 0; transform: translateY(15px); transition: opacity 0.3s, transform 0.3s; }
+        .toast.show  { opacity: 1; transform: translateY(0); }
+        .toast-ok    { background: var(--gain); }
+        .toast-err   { background: var(--loss); }
+        .toast-warn  { background: var(--warn); }
+
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white; padding: 0; }
+            .container { box-shadow: none; border-top: 4px solid var(--loss); }
+            .kpi-card span { font-size: 1.1rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="toast-container"></div>
+
+<div class="container">
+
+    <div class="app-header">
+        <h1>Auditoría y Gestión de Mermas</h1>
+        <div class="subtitle">El Hortelano — Control de Mermas en Expedición</div>
+    </div>
+
+    <div class="setup-panel no-print">
+        <label>Índice de Merma por Defecto (%):</label>
+        <input type="number" id="cfgMerma" value="20" min="0" max="100" step="0.5" onchange="updateConfig()">
+        <div class="setup-desc">
+            <strong>Ratios Base (Sin Merma):</strong>
+            Gazpacho: 1,5 L por 1 kg neto de tomate &nbsp;|&nbsp; Salmorejo: 1 kg por 1 kg neto de tomate
+        </div>
+    </div>
+
+    <div class="kpi-grid">
+        <div class="kpi-card"><small>Tomate Stock Bruto</small><span id="kpiLimpio">0,00 kg</span></div>
+        <div class="kpi-card"><small>Tomate Consumido</small><span id="kpiConsumo">0,00 kg</span></div>
+        <div class="kpi-card" id="cardBal"><small>Balance Inventario</small><span id="kpiBalance">0,00 kg</span></div>
+        <div class="kpi-card"><small>Desperdicio Total</small><span id="kpiBasura" style="color:#aaa;">0,00 kg</span></div>
+        <div class="kpi-card kpi-dark"><small>Total Gazpacho</small><span id="kpiGaz">0,00 L</span></div>
+        <div class="kpi-card kpi-accent"><small>Total Salmorejo</small><span id="kpiSalm">0,00 kg</span></div>
+    </div>
+
+    <div class="chart-section no-print">
+        <div class="chart-title">Evolución del Stock de Tomate (kg)</div>
+        <div id="chartEmpty" class="chart-empty" style="display:none;">Añade entradas y salidas para ver la evolución del stock.</div>
+        <canvas id="stockChart"></canvas>
+    </div>
+
+    <div class="grid">
+        <div>
+            <div class="section-title">
+                Recepción de Tomate Bruto
+                <span class="badge" id="countIn">0 entradas</span>
+            </div>
+            <div class="table-wrapper">
+                <table id="tableIn">
+                    <thead><tr>
+                        <th>Fecha</th>
+                        <th>Ref. Albarán</th>
+                        <th class="right">Masa Bruta</th>
+                        <th class="no-print right">✕</th>
+                    </tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div class="breakdown-box" id="boxIn">Sin entradas registradas.</div>
+        </div>
+
+        <div>
+            <div class="section-title">
+                Expedición Producto Terminado
+                <span class="badge" id="countOut">0 salidas</span>
+            </div>
+            <div class="table-wrapper">
+                <table id="tableOut">
+                    <thead><tr>
+                        <th>Fecha</th>
+                        <th>Tipo</th>
+                        <th class="right">Cant.</th>
+                        <th class="right">Merma %</th>
+                        <th class="right">Tomate cons.</th>
+                        <th class="no-print right">✕</th>
+                    </tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div class="breakdown-box" id="boxOut">Sin salidas registradas.</div>
+        </div>
+    </div>
+
+    <div class="form-panel no-print">
+        <div class="form-panel-title">Entrada de Nuevos Registros</div>
+        <div class="form-row">
+            <div class="field">
+                <label>Fecha de Operación</label>
+                <input type="date" id="fDate">
+            </div>
+            <div class="field">
+                <label>Tipo de Operación</label>
+                <select id="fType" onchange="toggleDynamicField()">
+                    <option value="IN">[+] Recibir Tomate (kg)</option>
+                    <option value="GAZ">[-] Expedir Gazpacho (L)</option>
+                    <option value="SAL">[-] Expedir Salmorejo (kg)</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Referencia / Albarán</label>
+                <input type="text" id="fRef" placeholder="Ej: Alb-994">
+            </div>
+            <div class="field">
+                <label>Cantidad (L / kg)</label>
+                <input type="number" id="fQty" step="0.01" placeholder="0.00" min="0">
+            </div>
+            <div class="field" id="dynamicFieldWrapper" style="display:none;">
+                <label>Merma de esta Elaboración (%)</label>
+                <input type="number" id="fDynamic" step="0.1" placeholder="Vacío = defecto">
+            </div>
+            <button class="btn-add" onclick="addEntry()">Anotar en Auditoría</button>
+        </div>
+    </div>
+
+    <div class="action-bar no-print">
+        <button class="btn-action btn-print" onclick="window.print()">🖨️ Imprimir Informe PDF</button>
+        <button class="btn-action btn-export" onclick="exportData()">📥 Exportar Copia JSON</button>
+        <div class="btn-action btn-import">
+            <label>📤 Importar Copia JSON<input type="file" id="fileImport" accept=".json" style="display:none;" onchange="importData(event)"></label>
+        </div>
+    </div>
+
+    <button class="btn-danger no-print" onclick="clearAllData()">Borrar todo el registro (Peligro)</button>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // ── Claves localStorage: NO modificar ──
+    const KEY_IN    = 'hortelano_in';
+    const KEY_OUT   = 'hortelano_out';
+    const KEY_MERMA = 'hortelano_merma';
+
+    let inData  = JSON.parse(localStorage.getItem(KEY_IN))  || [];
+    let outData = JSON.parse(localStorage.getItem(KEY_OUT)) || [];
+
+    document.getElementById('cfgMerma').value = localStorage.getItem(KEY_MERMA) || 20;
+
+    // ── Toast ──
+    function toast(msg, type = 'ok') {
+        const c = document.getElementById('toast-container');
+        const t = document.createElement('div');
+        t.className = `toast toast-${type}`;
+        t.textContent = msg;
+        c.appendChild(t);
+        requestAnimationFrame(() => t.classList.add('show'));
+        setTimeout(() => {
+            t.classList.remove('show');
+            t.addEventListener('transitionend', () => t.remove(), { once: true });
+        }, type === 'err' ? 5500 : 3500);
+    }
+
+    // ── Helpers ──
+    function fmt(n) {
+        return n.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    function parseDate(str) {
+        const [d, m, y] = str.split('/');
+        return new Date(+y, +m - 1, +d);
+    }
+    function saveToDisk() {
+        localStorage.setItem(KEY_IN,  JSON.stringify(inData));
+        localStorage.setItem(KEY_OUT, JSON.stringify(outData));
+    }
+    function updateConfig() {
+        localStorage.setItem(KEY_MERMA, document.getElementById('cfgMerma').value);
+        renderAll();
+    }
+    function toggleDynamicField() {
+        const type = document.getElementById('fType').value;
+        const w    = document.getElementById('dynamicFieldWrapper');
+        if (type === 'IN') { w.style.display = 'none'; document.getElementById('fDynamic').value = ''; }
+        else                { w.style.display = 'flex'; }
+    }
+
+    // ── Cálculo de merma de una salida ──
+    function calcConsumido(r, defaultMerma) {
+        const neto  = r.type === 'GAZ' ? (r.qty / 1.5) : r.qty;
+        const merma = (r.merma !== undefined && r.merma !== null && !isNaN(r.merma)) ? r.merma : defaultMerma;
+        return { neto, merma, bruto: neto / (1 - merma / 100), basura: (neto / (1 - merma / 100)) - neto };
+    }
+
+    // ── Gráfica ──
+    let stockChart = null;
+    function updateChart() {
+        if (typeof Chart === 'undefined') return;
+        const defaultMerma = parseFloat(document.getElementById('cfgMerma').value) || 20;
+        const canvas  = document.getElementById('stockChart');
+        const emptyEl = document.getElementById('chartEmpty');
+
+        const events = [
+            ...inData.map(r  => ({ date: r.date, kind: 'IN',  qty: r.qty, merma: null, type: null })),
+            ...outData.map(r => ({ date: r.date, kind: 'OUT', qty: r.qty, merma: r.merma, type: r.type }))
+        ].sort((a, b) => parseDate(a.date) - parseDate(b.date));
+
+        if (!events.length) {
+            canvas.style.display = 'none';
+            emptyEl.style.display = 'block';
+            return;
+        }
+        canvas.style.display = 'block';
+        emptyEl.style.display = 'none';
+
+        let balance = 0;
+        const labels = [], values = [], pointColors = [];
+
+        events.forEach(e => {
+            if (e.kind === 'IN') {
+                balance += e.qty;
+            } else {
+                const { bruto } = calcConsumido(e, defaultMerma);
+                balance -= bruto;
+            }
+            labels.push(e.date);
+            values.push(parseFloat(balance.toFixed(2)));
+            pointColors.push(balance < 0 ? '#8b0000' : '#27ae60');
+        });
+
+        if (!stockChart) {
+            stockChart = new Chart(canvas.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Stock (kg)',
+                        data: values,
+                        borderColor: '#2c3e50',
+                        backgroundColor: 'rgba(44,62,80,0.06)',
+                        pointBackgroundColor: pointColors,
+                        pointRadius: 5,
+                        tension: 0.3,
+                        fill: true,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { callbacks: { label: ctx => ` ${fmt(ctx.parsed.y)} kg` } }
+                    },
+                    scales: {
+                        y: { grid: { color: '#f0f0f0' }, ticks: { callback: v => fmt(v) + ' kg', font: { size: 10 } } },
+                        x: { ticks: { font: { size: 9 }, maxRotation: 45 } }
+                    }
+                }
+            });
+        } else {
+            stockChart.data.labels = labels;
+            stockChart.data.datasets[0].data = values;
+            stockChart.data.datasets[0].pointBackgroundColor = pointColors;
+            stockChart.update();
+        }
+    }
+
+    // ── Render tablas + KPIs ──
+    function renderAll() {
+        const defaultMerma = parseFloat(document.getElementById('cfgMerma').value) || 20;
+
+        // Tabla entradas
+        const tbIn = document.getElementById('tableIn').tBodies[0];
+        tbIn.innerHTML = '';
+        let tBruto = 0;
+        [...inData].reverse().forEach((r, ri) => {
+            const i = inData.length - 1 - ri;
+            tBruto += r.qty;
+            tbIn.innerHTML += `<tr>
+                <td>${r.date}</td>
+                <td>${r.ref}</td>
+                <td class="num">${fmt(r.qty)} kg</td>
+                <td class="no-print right"><button class="btn-del" onclick="delIn(${i})">✕</button></td>
+            </tr>`;
+        });
+        if (!inData.length) tbIn.innerHTML = `<tr><td colspan="4" class="empty-state">Sin entradas registradas</td></tr>`;
+
+        // Tabla salidas
+        const tbOut = document.getElementById('tableOut').tBodies[0];
+        tbOut.innerHTML = '';
+        let vGaz = 0, kSalm = 0, tConsumo = 0, tBasura = 0;
+        [...outData].reverse().forEach((r, ri) => {
+            const i = outData.length - 1 - ri;
+            if (r.type === 'GAZ') vGaz += r.qty; else kSalm += r.qty;
+            const { merma, bruto, basura } = calcConsumido(r, defaultMerma);
+            tConsumo += bruto;
+            tBasura  += basura;
+
+            let mermaCls = 'td-merma-ok';
+            if      (merma > defaultMerma * 1.4)  mermaCls = 'td-merma-bad';
+            else if (merma > defaultMerma * 1.15)  mermaCls = 'td-merma-warn';
+
+            tbOut.innerHTML += `<tr>
+                <td>${r.date}</td>
+                <td><strong>${r.type}</strong> <small style="color:#999;">${r.ref}</small></td>
+                <td class="num">${fmt(r.qty)}</td>
+                <td class="num ${mermaCls}">${fmt(merma)} %</td>
+                <td class="num">${fmt(bruto)} kg</td>
+                <td class="no-print right"><button class="btn-del" onclick="delOut(${i})">✕</button></td>
+            </tr>`;
+        });
+        if (!outData.length) tbOut.innerHTML = `<tr><td colspan="6" class="empty-state">Sin salidas registradas</td></tr>`;
+
+        // KPIs
+        const bal    = tBruto - tConsumo;
+        const balEl  = document.getElementById('kpiBalance');
+        const cardBal = document.getElementById('cardBal');
+        document.getElementById('kpiLimpio').textContent  = fmt(tBruto)  + ' kg';
+        document.getElementById('kpiConsumo').textContent = fmt(tConsumo) + ' kg';
+        document.getElementById('kpiBasura').textContent  = fmt(tBasura)  + ' kg';
+        document.getElementById('kpiGaz').textContent     = fmt(vGaz)     + ' L';
+        document.getElementById('kpiSalm').textContent    = fmt(kSalm)    + ' kg';
+        balEl.textContent  = (bal >= 0 ? '+' : '') + fmt(bal) + ' kg';
+        balEl.style.color  = bal < 0 ? '#8b0000' : '#27ae60';
+        cardBal.className  = 'kpi-card ' + (bal < 0 ? 'kpi-loss' : 'kpi-gain');
+
+        // Resúmenes
+        document.getElementById('boxIn').innerHTML  = inData.length
+            ? `Total ingresado: <strong>${fmt(tBruto)} kg</strong> en <strong>${inData.length}</strong> entrada${inData.length !== 1 ? 's' : ''}`
+            : 'Sin entradas registradas.';
+        document.getElementById('boxOut').innerHTML = outData.length
+            ? `Neto: <strong>${fmt(vGaz)} L</strong> Gaz &nbsp;|&nbsp; <strong>${fmt(kSalm)} kg</strong> Salm &nbsp;|&nbsp; Desperdicio: <strong>${fmt(tBasura)} kg</strong>`
+            : 'Sin salidas registradas.';
+
+        document.getElementById('countIn').textContent  = `${inData.length} entrada${inData.length !== 1 ? 's' : ''}`;
+        document.getElementById('countOut').textContent = `${outData.length} salida${outData.length !== 1 ? 's' : ''}`;
+
+        updateChart();
+    }
+
+    // ── Añadir registro ──
+    function addEntry() {
+        const dateInput = document.getElementById('fDate').value;
+        const type      = document.getElementById('fType').value;
+        const qty       = parseFloat(document.getElementById('fQty').value);
+        const dynVal    = parseFloat(document.getElementById('fDynamic').value);
+        const ref       = document.getElementById('fRef').value.trim() || 'Manual';
+
+        if (!dateInput)      return toast('Selecciona una fecha antes de continuar.', 'warn');
+        if (!qty || qty <= 0) return toast('La cantidad debe ser mayor que cero.', 'warn');
+
+        const fDate = dateInput.split('-').reverse().join('/');
+
+        if (type === 'IN') {
+            inData.push({ date: fDate, ref, qty });
+            toast(`✓ ${fmt(qty)} kg de tomate registrados.`, 'ok');
+        } else {
+            const defaultMerma = parseFloat(document.getElementById('cfgMerma').value) || 20;
+            const merma = isNaN(dynVal) ? defaultMerma : dynVal;
+            outData.push({ date: fDate, type, ref, qty, merma });
+            const lbl = type === 'GAZ' ? 'L de Gazpacho' : 'kg de Salmorejo';
+            toast(`✓ ${fmt(qty)} ${lbl} anotados (merma ${fmt(merma)} %).`, 'ok');
+        }
+
+        saveToDisk();
+        renderAll();
+        document.getElementById('fQty').value    = '';
+        document.getElementById('fRef').value    = '';
+        document.getElementById('fDynamic').value = '';
+        document.getElementById('fQty').focus();
+    }
+
+    // ── Eliminar ──
+    function delIn(i) {
+        if (!confirm(`¿Eliminar la entrada de ${fmt(inData[i].qty)} kg del ${inData[i].date}?`)) return;
+        inData.splice(i, 1);
+        saveToDisk(); renderAll();
+        toast('Entrada eliminada.', 'warn');
+    }
+    function delOut(i) {
+        if (!confirm(`¿Eliminar la salida de ${fmt(outData[i].qty)} del ${outData[i].date}?`)) return;
+        outData.splice(i, 1);
+        saveToDisk(); renderAll();
+        toast('Salida eliminada.', 'warn');
+    }
+
+    // ── Borrar todo ──
+    function clearAllData() {
+        if (!confirm('¿Seguro? Esto borrará TODOS los datos de forma permanente.\n\nExporta una copia de seguridad primero.')) return;
+        if (!confirm('Última confirmación. ¿Borrar todos los registros de El Hortelano?')) return;
+        localStorage.removeItem(KEY_IN);
+        localStorage.removeItem(KEY_OUT);
+        localStorage.removeItem(KEY_MERMA);
+        location.reload();
+    }
+
+    // ── Exportar JSON ──
+    function exportData() {
+        const payload = {
+            app:          'ElHortelano_Mermas',
+            exportado_en: new Date().toISOString(),
+            merma_defecto: document.getElementById('cfgMerma').value,
+            entradas: inData,
+            salidas:  outData
+        };
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href     = url;
+        a.download = `Backup_ElHortelano_${new Date().toLocaleDateString('es-ES').replace(/\//g, '-')}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast(`✓ Exportados: ${inData.length} entradas y ${outData.length} salidas.`, 'ok');
+    }
+
+    // ── Importar JSON ──
+    function importData(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            try {
+                const data = JSON.parse(ev.target.result);
+                if (!Array.isArray(data.entradas) || !Array.isArray(data.salidas))
+                    return toast('Archivo no reconocido. ¿Es una exportación válida de El Hortelano?', 'err');
+                if (!confirm(`¿Importar ${data.entradas.length} entradas y ${data.salidas.length} salidas?\nLos datos actuales serán reemplazados.`)) return;
+                inData  = data.entradas;
+                outData = data.salidas;
+                if (data.merma_defecto) {
+                    document.getElementById('cfgMerma').value = data.merma_defecto;
+                    localStorage.setItem(KEY_MERMA, data.merma_defecto);
+                }
+                saveToDisk(); renderAll();
+                toast(`✓ Importados: ${inData.length} entradas, ${outData.length} salidas.`, 'ok');
+            } catch { toast('Error al leer el archivo. ¿Es un JSON válido?', 'err'); }
+        };
+        reader.readAsText(file);
+        e.target.value = '';
+    }
+
+    // ── Init ──
+    document.getElementById('fDate').value = new Date().toISOString().split('T')[0];
+    toggleDynamicField();
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && document.activeElement.closest('.form-panel')) addEntry();
+    });
+    renderAll();
+</script>
+</body>
+</html>
