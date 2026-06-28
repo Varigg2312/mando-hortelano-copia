@@ -5,120 +5,171 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Auditoría de Mermas — El Hortelano</title>
     <style>
-        :root {
-            --dark: #111;
-            --accent: #2c3e50;
-            --loss: #8b0000;
-            --gain: #27ae60;
-            --warn: #e67e22;
-            --gray: #f4f7f6;
-            --border: #e0e0e0;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: var(--gray); padding: 15px; color: var(--dark); }
+        :root { --dark:#111; --accent:#2c3e50; --loss:#8b0000; --gain:#27ae60; --warn:#e67e22; --gray:#f4f7f6; --border:#e0e0e0; }
+        * { box-sizing:border-box; margin:0; padding:0; }
+        body { font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; background:var(--gray); padding:15px; color:var(--dark); }
+        .container { max-width:1300px; margin:auto; background:#fff; padding:25px; border-top:8px solid var(--loss); box-shadow:0 4px 20px rgba(0,0,0,.12); }
 
-        .container { max-width: 1300px; margin: auto; background: #fff; padding: 25px; border-top: 8px solid var(--loss); box-shadow: 0 4px 20px rgba(0,0,0,0.12); }
+        .app-header { text-align:center; border-bottom:2px solid var(--border); padding-bottom:15px; margin-bottom:20px; }
+        .app-header h1 { text-transform:uppercase; letter-spacing:1px; color:var(--loss); font-size:1.4rem; margin-bottom:4px; }
+        .app-header .subtitle { font-size:11px; text-transform:uppercase; color:#777; font-weight:bold; letter-spacing:.5px; }
 
-        /* HEADER */
-        .app-header { text-align: center; border-bottom: 2px solid var(--border); padding-bottom: 15px; margin-bottom: 20px; }
-        .app-header h1 { text-transform: uppercase; letter-spacing: 1px; color: var(--loss); font-size: 1.4rem; margin-bottom: 4px; }
-        .app-header .subtitle { font-size: 11px; text-transform: uppercase; color: #777; font-weight: bold; letter-spacing: 0.5px; }
+        .setup-panel { background:#fff9f9; padding:12px 16px; border:1px solid #ddd; border-left:5px solid var(--loss); margin-bottom:20px; display:flex; flex-wrap:wrap; align-items:center; gap:12px; }
+        .setup-panel label { font-weight:bold; font-size:12px; text-transform:uppercase; }
+        .setup-panel input[type="number"] { padding:8px; font-size:14px; font-family:monospace; font-weight:bold; width:70px; text-align:right; border:1px solid #aaa; border-radius:3px; }
+        .setup-desc { font-size:11px; color:#555; flex:1 1 100%; }
 
-        /* CONFIG */
-        .setup-panel { background: #fff9f9; padding: 12px 16px; border: 1px solid #ddd; border-left: 5px solid var(--loss); margin-bottom: 20px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
-        .setup-panel label { font-weight: bold; font-size: 12px; text-transform: uppercase; }
-        .setup-panel input[type="number"] { padding: 8px; font-size: 14px; font-family: monospace; font-weight: bold; width: 70px; text-align: right; border: 1px solid #aaa; border-radius: 3px; }
-        .setup-desc { font-size: 11px; color: #555; flex: 1 1 100%; }
+        .kpi-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:10px; }
+        @media(max-width:600px){ .kpi-grid { grid-template-columns:1fr 1fr; } }
+        .kpi-card { border:1px solid #ddd; padding:14px 10px; text-align:center; background:#fff; border-radius:4px; transition:border-color .3s,background .3s; }
+        .kpi-card small { display:block; font-size:9px; text-transform:uppercase; color:#777; margin-bottom:6px; font-weight:bold; letter-spacing:.3px; }
+        .kpi-card span { font-size:1.4rem; font-weight:bold; font-family:monospace; display:block; }
+        .kpi-dark  { background:var(--dark);   color:#fff; border-color:var(--dark); }
+        .kpi-accent{ background:var(--accent); color:#fff; border-color:var(--accent); }
+        .kpi-gain  { background:#eafaf1; border-color:var(--gain); }
+        .kpi-loss  { background:#fdf2f2; border-color:var(--loss); }
 
-        /* KPI */
-        .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
-        @media (max-width: 600px) { .kpi-grid { grid-template-columns: 1fr 1fr; } }
-        .kpi-card { border: 1px solid #ddd; padding: 14px 10px; text-align: center; background: #fff; border-radius: 4px; transition: border-color 0.3s, background 0.3s; }
-        .kpi-card small { display: block; font-size: 9px; text-transform: uppercase; color: #777; margin-bottom: 6px; font-weight: bold; letter-spacing: 0.3px; }
-        .kpi-card span { font-size: 1.4rem; font-weight: bold; font-family: monospace; display: block; }
-        .kpi-dark   { background: var(--dark);   color: #fff; border-color: var(--dark); }
-        .kpi-accent { background: var(--accent);  color: #fff; border-color: var(--accent); }
-        .kpi-gain   { background: #eafaf1; border-color: var(--gain); }
-        .kpi-loss   { background: #fdf2f2; border-color: var(--loss); }
+        .kpi-pred { display:flex; align-items:center; gap:15px; border:1px solid #ddd; padding:12px 16px; border-radius:4px; background:#fff; margin-bottom:20px; flex-wrap:wrap; }
+        .kpi-pred > small { font-size:9px; text-transform:uppercase; color:#777; font-weight:bold; letter-spacing:.3px; white-space:nowrap; }
+        .pred-dias { font-size:1.5rem; font-weight:bold; font-family:monospace; white-space:nowrap; }
+        .pred-note { font-size:10px; color:#888; flex:1; }
+        .pred-ok  { color:var(--gain) !important; }
+        .pred-warn{ color:var(--warn) !important; }
+        .pred-bad { color:var(--loss) !important; }
 
-        /* CHART */
-        .chart-section { margin-bottom: 25px; border: 1px solid var(--border); border-radius: 4px; padding: 15px; }
-        .chart-title { font-size: 11px; text-transform: uppercase; font-weight: bold; color: #555; margin-bottom: 10px; letter-spacing: 0.5px; }
-        .chart-section canvas { max-height: 190px; }
-        .chart-empty { text-align: center; padding: 30px; color: #bbb; font-size: 11px; text-transform: uppercase; }
+        .chart-section { margin-bottom:20px; border:1px solid var(--border); border-radius:4px; padding:15px; }
+        .chart-title { font-size:11px; text-transform:uppercase; font-weight:bold; color:#555; margin-bottom:10px; letter-spacing:.5px; }
+        .chart-section canvas { max-height:190px; }
+        .chart-empty { text-align:center; padding:30px; color:#bbb; font-size:11px; text-transform:uppercase; }
 
-        /* TABLES */
-        .grid { display: grid; grid-template-columns: 1fr; gap: 25px; margin-bottom: 25px; }
-        @media (min-width: 800px) { .grid { grid-template-columns: 1fr 1.3fr; } }
+        .grid { display:grid; grid-template-columns:1fr; gap:25px; margin-bottom:25px; }
+        @media(min-width:800px){ .grid { grid-template-columns:1fr 1.3fr; } }
 
-        .section-title { font-size: 12px; text-transform: uppercase; font-weight: bold; background: var(--dark); color: #fff; padding: 10px 12px; display: flex; justify-content: space-between; align-items: center; }
-        .section-title .badge { font-size: 10px; background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 10px; font-weight: normal; }
+        .section-title { font-size:12px; text-transform:uppercase; font-weight:bold; background:var(--dark); color:#fff; padding:10px 12px; display:flex; justify-content:space-between; align-items:center; }
+        .section-title .badge { font-size:10px; background:rgba(255,255,255,.2); padding:2px 8px; border-radius:10px; font-weight:normal; }
+        .toggle-group { display:flex; gap:4px; }
+        .toggle-btn { background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.3); color:#fff; padding:3px 10px; font-size:10px; cursor:pointer; border-radius:2px; text-transform:uppercase; font-weight:bold; transition:.2s; }
+        .toggle-btn.active { background:#fff; color:var(--dark); }
 
-        .table-wrapper { width: 100%; overflow-x: auto; border: 1px solid #eee; border-top: none; margin-bottom: 0; }
-        table { width: 100%; border-collapse: collapse; font-size: 11px; min-width: 380px; }
-        th { background: #f5f5f5; color: #555; padding: 9px 8px; text-align: left; text-transform: uppercase; font-size: 9px; border-bottom: 2px solid #ddd; white-space: nowrap; }
-        td { padding: 9px 8px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
-        tr:last-child td { border-bottom: none; }
-        tr:hover td { background: #fafafa; }
-        .num { font-family: monospace; font-size: 11px; font-weight: bold; text-align: right; }
-        .right { text-align: right; }
-        .td-merma-ok   { color: var(--gain); font-weight: bold; }
-        .td-merma-warn { color: var(--warn); font-weight: bold; }
-        .td-merma-bad  { color: var(--loss); font-weight: bold; background: #fff5f5; }
+        .table-wrapper { width:100%; overflow-x:auto; border:1px solid #eee; border-top:none; }
+        table { width:100%; border-collapse:collapse; font-size:11px; min-width:380px; }
+        th { background:#f5f5f5; color:#555; padding:9px 8px; text-align:left; text-transform:uppercase; font-size:9px; border-bottom:2px solid #ddd; white-space:nowrap; }
+        td { padding:9px 8px; border-bottom:1px solid #f0f0f0; vertical-align:middle; }
+        tr:last-child td { border-bottom:none; }
+        tr:hover td { background:#fafafa; }
+        .num { font-family:monospace; font-size:11px; font-weight:bold; text-align:right; }
+        .right { text-align:right; }
+        .td-merma-ok  { color:var(--gain); font-weight:bold; }
+        .td-merma-warn{ color:var(--warn); font-weight:bold; }
+        .td-merma-bad { color:var(--loss); font-weight:bold; background:#fff5f5; }
 
-        .btn-del { background: none; border: 1px solid #ddd; color: #bbb; cursor: pointer; padding: 3px 7px; font-size: 9px; text-transform: uppercase; transition: 0.2s; border-radius: 2px; }
-        .btn-del:hover { background: var(--loss); color: white; border-color: var(--loss); }
+        .btn-del  { background:none; border:1px solid #ddd; color:#bbb; cursor:pointer; padding:3px 7px; font-size:9px; text-transform:uppercase; transition:.2s; border-radius:2px; }
+        .btn-del:hover  { background:var(--loss); color:white; border-color:var(--loss); }
+        .btn-edit { background:none; border:1px solid #ddd; color:#aaa; cursor:pointer; padding:3px 7px; font-size:9px; text-transform:uppercase; transition:.2s; border-radius:2px; margin-right:3px; }
+        .btn-edit:hover { background:var(--accent); color:white; border-color:var(--accent); }
 
-        .breakdown-box { background: #f8f9fa; padding: 10px 12px; border: 1px solid #eee; border-top: none; font-size: 10px; color: #444; min-height: 36px; }
-        .breakdown-box strong { color: var(--loss); }
-        .empty-state { text-align: center; padding: 25px; color: #ccc; font-size: 11px; text-transform: uppercase; }
+        .breakdown-box { background:#f8f9fa; padding:10px 12px; border:1px solid #eee; border-top:none; font-size:10px; color:#444; min-height:36px; }
+        .breakdown-box strong { color:var(--loss); }
+        .empty-state { text-align:center; padding:25px; color:#ccc; font-size:11px; text-transform:uppercase; }
 
-        /* FORM */
-        .form-panel { border: 2px dashed #ccc; padding: 20px; margin-bottom: 20px; border-radius: 4px; }
-        .form-panel-title { font-size: 12px; text-transform: uppercase; font-weight: bold; border-bottom: 2px solid var(--dark); padding-bottom: 10px; margin-bottom: 18px; }
-        .form-row { display: flex; flex-direction: column; gap: 12px; }
-        @media (min-width: 800px) { .form-row { flex-direction: row; flex-wrap: wrap; align-items: flex-end; } }
-        .field { display: flex; flex-direction: column; flex: 1 1 160px; }
-        .field label { font-size: 10px; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; color: #555; }
-        .field input, .field select { padding: 12px; border: 2px solid #ddd; border-radius: 4px; font-size: 15px; font-family: inherit; transition: border-color 0.2s; width: 100%; box-sizing: border-box; }
-        .field input:focus, .field select:focus { border-color: var(--loss); outline: none; }
-        .btn-add { background: var(--loss); color: white; font-weight: bold; cursor: pointer; border: none; padding: 14px 20px; text-transform: uppercase; font-size: 13px; flex: 1 1 160px; align-self: flex-end; border-radius: 4px; transition: background 0.2s; }
-        .btn-add:hover { background: #660000; }
+        .resumen-section { margin-bottom:25px; }
+        .resumen-empty { text-align:center; padding:25px; color:#ccc; font-size:11px; text-transform:uppercase; border:1px solid #eee; border-top:none; }
 
-        /* ACTION BAR */
-        .action-bar { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-        @media (max-width: 600px) { .action-bar { grid-template-columns: 1fr; } }
-        .btn-action { padding: 14px; border: 2px solid; font-weight: bold; text-transform: uppercase; font-size: 11px; cursor: pointer; border-radius: 4px; transition: 0.2s; text-align: center; background: transparent; }
-        .btn-print  { border-color: var(--dark);   color: var(--dark); }
-        .btn-print:hover  { background: var(--dark);   color: white; }
-        .btn-export { border-color: #16a085; color: #16a085; }
-        .btn-export:hover { background: #16a085; color: white; }
-        .btn-import { border-color: #7f8c8d; color: #7f8c8d; }
-        .btn-import:hover { background: #7f8c8d; color: white; }
-        .btn-import label { cursor: pointer; display: block; }
+        .form-panel { border:2px dashed #ccc; padding:20px; margin-bottom:20px; border-radius:4px; }
+        .form-panel-title { font-size:12px; text-transform:uppercase; font-weight:bold; border-bottom:2px solid var(--dark); padding-bottom:10px; margin-bottom:18px; }
+        .form-row { display:flex; flex-direction:column; gap:12px; }
+        @media(min-width:800px){ .form-row { flex-direction:row; flex-wrap:wrap; align-items:flex-end; } }
+        .field { display:flex; flex-direction:column; flex:1 1 160px; }
+        .field label { font-size:10px; font-weight:bold; text-transform:uppercase; margin-bottom:5px; color:#555; }
+        .field input,.field select { padding:12px; border:2px solid #ddd; border-radius:4px; font-size:15px; font-family:inherit; transition:border-color .2s; width:100%; }
+        .field input:focus,.field select:focus { border-color:var(--loss); outline:none; }
+        .btn-add { background:var(--loss); color:white; font-weight:bold; cursor:pointer; border:none; padding:14px 20px; text-transform:uppercase; font-size:13px; flex:1 1 160px; align-self:flex-end; border-radius:4px; transition:background .2s; }
+        .btn-add:hover { background:#660000; }
 
-        .btn-danger { background: none; border: none; color: #bbb; font-size: 10px; cursor: pointer; text-decoration: underline; display: block; margin-top: 8px; text-align: right; }
-        .btn-danger:hover { color: var(--loss); }
+        .calc-panel { border:2px solid #d6eaf8; padding:20px; margin-bottom:20px; border-radius:4px; background:#f8fbff; }
+        .calc-output-val { font-size:1.5rem; font-weight:bold; font-family:monospace; color:var(--accent); padding:10px 0 4px; }
+        .calc-panel .field label { color:var(--accent); }
 
-        /* TOASTS */
-        #toast-container { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 8px; align-items: center; width: 90%; max-width: 450px; pointer-events: none; }
-        .toast { width: 100%; padding: 12px 18px; border-radius: 6px; font-size: 13px; font-weight: bold; text-align: center; color: white; background: var(--dark); box-shadow: 0 4px 12px rgba(0,0,0,0.2); opacity: 0; transform: translateY(15px); transition: opacity 0.3s, transform 0.3s; }
-        .toast.show  { opacity: 1; transform: translateY(0); }
-        .toast-ok    { background: var(--gain); }
-        .toast-err   { background: var(--loss); }
-        .toast-warn  { background: var(--warn); }
+        .action-bar { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:10px; margin-bottom:10px; }
+        @media(max-width:700px){ .action-bar { grid-template-columns:1fr 1fr; } }
+        @media(max-width:400px){ .action-bar { grid-template-columns:1fr; } }
+        .btn-action { padding:14px; border:2px solid; font-weight:bold; text-transform:uppercase; font-size:11px; cursor:pointer; border-radius:4px; transition:.2s; text-align:center; background:transparent; }
+        .btn-print  { border-color:var(--dark);  color:var(--dark); }
+        .btn-print:hover  { background:var(--dark);  color:white; }
+        .btn-export { border-color:#16a085; color:#16a085; }
+        .btn-export:hover { background:#16a085; color:white; }
+        .btn-csv    { border-color:#27ae60; color:#27ae60; }
+        .btn-csv:hover { background:#27ae60; color:white; }
+        .btn-import { border-color:#7f8c8d; color:#7f8c8d; }
+        .btn-import:hover { background:#7f8c8d; color:white; }
+        .btn-import label { cursor:pointer; display:block; }
+        .btn-danger { background:none; border:none; color:#bbb; font-size:10px; cursor:pointer; text-decoration:underline; display:block; margin-top:8px; text-align:right; }
+        .btn-danger:hover { color:var(--loss); }
+
+        .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:10000; align-items:center; justify-content:center; padding:20px; }
+        .modal-overlay.open { display:flex; }
+        .modal-box { background:#fff; border-top:6px solid var(--accent); padding:25px; border-radius:6px; width:100%; max-width:620px; box-shadow:0 8px 32px rgba(0,0,0,.25); max-height:90vh; overflow-y:auto; }
+        .modal-title { font-size:13px; text-transform:uppercase; font-weight:bold; border-bottom:2px solid var(--border); padding-bottom:10px; margin-bottom:18px; color:var(--accent); }
+        .modal-actions { display:flex; gap:10px; margin-top:18px; justify-content:flex-end; }
+        .btn-save   { background:var(--accent); color:#fff; border:none; padding:12px 24px; font-weight:bold; text-transform:uppercase; font-size:12px; cursor:pointer; border-radius:4px; }
+        .btn-save:hover { background:#1a252f; }
+        .btn-cancel { background:none; border:2px solid #ddd; color:#555; padding:12px 20px; font-weight:bold; text-transform:uppercase; font-size:12px; cursor:pointer; border-radius:4px; }
+        .btn-cancel:hover { background:#f5f5f5; }
+
+        #toast-container { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); z-index:9999; display:flex; flex-direction:column; gap:8px; align-items:center; width:90%; max-width:450px; pointer-events:none; }
+        .toast { width:100%; padding:12px 18px; border-radius:6px; font-size:13px; font-weight:bold; text-align:center; color:white; background:var(--dark); box-shadow:0 4px 12px rgba(0,0,0,.2); opacity:0; transform:translateY(15px); transition:opacity .3s,transform .3s; }
+        .toast.show { opacity:1; transform:translateY(0); }
+        .toast-ok   { background:var(--gain); }
+        .toast-err  { background:var(--loss); }
+        .toast-warn { background:var(--warn); }
 
         @media print {
-            .no-print { display: none !important; }
-            body { background: white; padding: 0; }
-            .container { box-shadow: none; border-top: 4px solid var(--loss); }
-            .kpi-card span { font-size: 1.1rem; }
+            .no-print { display:none !important; }
+            body { background:white; padding:0; }
+            .container { box-shadow:none; border-top:4px solid var(--loss); }
+            .kpi-card span { font-size:1.1rem; }
         }
     </style>
 </head>
 <body>
 
 <div id="toast-container"></div>
+
+<div class="modal-overlay" id="editModal">
+    <div class="modal-box">
+        <div class="modal-title">Editar Registro</div>
+        <div class="form-row">
+            <div class="field">
+                <label>Fecha</label>
+                <input type="date" id="eDate">
+            </div>
+            <div class="field">
+                <label>Tipo</label>
+                <select id="eType"></select>
+            </div>
+            <div class="field">
+                <label>Referencia / Albarán</label>
+                <input type="text" id="eRef">
+            </div>
+            <div class="field">
+                <label>Cantidad</label>
+                <input type="number" id="eQty" step="0.01" min="0">
+            </div>
+            <div class="field" id="eMermaRow">
+                <label>Merma (%)</label>
+                <input type="number" id="eMerma" step="0.1" min="0">
+            </div>
+            <div class="field">
+                <label>Operador</label>
+                <input type="text" id="eOperator" placeholder="Nombre del operador">
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+            <button class="btn-save"   onclick="saveEdit()">Guardar Cambios</button>
+        </div>
+    </div>
+</div>
 
 <div class="container">
 
@@ -140,15 +191,27 @@
         <div class="kpi-card"><small>Tomate Stock Bruto</small><span id="kpiLimpio">0,00 kg</span></div>
         <div class="kpi-card"><small>Tomate Consumido</small><span id="kpiConsumo">0,00 kg</span></div>
         <div class="kpi-card" id="cardBal"><small>Balance Inventario</small><span id="kpiBalance">0,00 kg</span></div>
-        <div class="kpi-card"><small>Desperdicio Total</small><span id="kpiBasura" style="color:#aaa;">0,00 kg</span></div>
+        <div class="kpi-card"><small>Desperdicio Total</small><span id="kpiBasura" style="color:#aaa">0,00 kg</span></div>
         <div class="kpi-card kpi-dark"><small>Total Gazpacho</small><span id="kpiGaz">0,00 L</span></div>
         <div class="kpi-card kpi-accent"><small>Total Salmorejo</small><span id="kpiSalm">0,00 kg</span></div>
     </div>
 
+    <div class="kpi-pred no-print">
+        <small>Predicción de Stock</small>
+        <div class="pred-dias" id="kpiDias">— días</div>
+        <div class="pred-note" id="kpiPredNote">Sin datos de consumo suficientes para estimar.</div>
+    </div>
+
     <div class="chart-section no-print">
         <div class="chart-title">Evolución del Stock de Tomate (kg)</div>
-        <div id="chartEmpty" class="chart-empty" style="display:none;">Añade entradas y salidas para ver la evolución del stock.</div>
+        <div id="chartEmpty" class="chart-empty" style="display:none">Añade entradas y salidas para ver la evolución del stock.</div>
         <canvas id="stockChart"></canvas>
+    </div>
+
+    <div class="chart-section no-print">
+        <div class="chart-title">Merma por Expedición (%)</div>
+        <div id="mermaChartEmpty" class="chart-empty">Sin salidas registradas para mostrar mermas.</div>
+        <canvas id="mermaChart" style="display:none; max-height:190px"></canvas>
     </div>
 
     <div class="grid">
@@ -160,17 +223,14 @@
             <div class="table-wrapper">
                 <table id="tableIn">
                     <thead><tr>
-                        <th>Fecha</th>
-                        <th>Ref. Albarán</th>
-                        <th class="right">Masa Bruta</th>
-                        <th class="no-print right">✕</th>
+                        <th>Fecha</th><th>Ref. / Operador</th><th class="right">Masa Bruta</th>
+                        <th class="no-print right">Acc.</th>
                     </tr></thead>
                     <tbody></tbody>
                 </table>
             </div>
             <div class="breakdown-box" id="boxIn">Sin entradas registradas.</div>
         </div>
-
         <div>
             <div class="section-title">
                 Expedición Producto Terminado
@@ -179,17 +239,39 @@
             <div class="table-wrapper">
                 <table id="tableOut">
                     <thead><tr>
-                        <th>Fecha</th>
-                        <th>Tipo</th>
-                        <th class="right">Cant.</th>
-                        <th class="right">Merma %</th>
-                        <th class="right">Tomate cons.</th>
-                        <th class="no-print right">✕</th>
+                        <th>Fecha</th><th>Tipo / Operador</th><th class="right">Cant.</th>
+                        <th class="right">Merma %</th><th class="right">Tomate cons.</th>
+                        <th class="no-print right">Acc.</th>
                     </tr></thead>
                     <tbody></tbody>
                 </table>
             </div>
             <div class="breakdown-box" id="boxOut">Sin salidas registradas.</div>
+        </div>
+    </div>
+
+    <div class="resumen-section">
+        <div class="section-title">
+            Resumen Agrupado
+            <div class="toggle-group no-print">
+                <button class="toggle-btn active" id="btnWeek"  onclick="setResumenMode('week')">Semanal</button>
+                <button class="toggle-btn"        id="btnMonth" onclick="setResumenMode('month')">Mensual</button>
+            </div>
+        </div>
+        <div id="resumenEmpty" class="resumen-empty">Sin datos para mostrar el resumen.</div>
+        <div class="table-wrapper" id="resumenWrapper" style="display:none">
+            <table id="tableResumen">
+                <thead><tr>
+                    <th id="thPeriod">Semana</th>
+                    <th class="right">Tomate rec. (kg)</th>
+                    <th class="right">Gaz. (L)</th>
+                    <th class="right">Salm. (kg)</th>
+                    <th class="right">Merma media</th>
+                    <th class="right">Consumo (kg)</th>
+                    <th class="right">Balance</th>
+                </tr></thead>
+                <tbody></tbody>
+            </table>
         </div>
     </div>
 
@@ -213,10 +295,14 @@
                 <input type="text" id="fRef" placeholder="Ej: Alb-994">
             </div>
             <div class="field">
+                <label>Operador</label>
+                <input type="text" id="fOperator" placeholder="Nombre">
+            </div>
+            <div class="field">
                 <label>Cantidad (L / kg)</label>
                 <input type="number" id="fQty" step="0.01" placeholder="0.00" min="0">
             </div>
-            <div class="field" id="dynamicFieldWrapper" style="display:none;">
+            <div class="field" id="dynamicFieldWrapper" style="display:none">
                 <label>Merma de esta Elaboración (%)</label>
                 <input type="number" id="fDynamic" step="0.1" placeholder="Vacío = defecto">
             </div>
@@ -224,11 +310,37 @@
         </div>
     </div>
 
+    <div class="calc-panel no-print">
+        <div class="form-panel-title">Calculadora de Pedido</div>
+        <div class="form-row">
+            <div class="field">
+                <label>Producto a Fabricar</label>
+                <select id="calcType" onchange="calcPedido()">
+                    <option value="GAZ">Gazpacho (L)</option>
+                    <option value="SAL">Salmorejo (kg)</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Cantidad Deseada</label>
+                <input type="number" id="calcQty" step="0.01" placeholder="0.00" min="0" oninput="calcPedido()">
+            </div>
+            <div class="field">
+                <label>Merma Estimada (%)</label>
+                <input type="number" id="calcMerma" step="0.5" placeholder="Usar defecto" min="0" oninput="calcPedido()">
+            </div>
+            <div class="field">
+                <label>Tomate Bruto Necesario</label>
+                <div class="calc-output-val" id="calcOutput">—</div>
+            </div>
+        </div>
+    </div>
+
     <div class="action-bar no-print">
-        <button class="btn-action btn-print" onclick="window.print()">🖨️ Imprimir Informe PDF</button>
-        <button class="btn-action btn-export" onclick="exportData()">📥 Exportar Copia JSON</button>
-        <div class="btn-action btn-import">
-            <label>📤 Importar Copia JSON<input type="file" id="fileImport" accept=".json" style="display:none;" onchange="importData(event)"></label>
+        <button class="btn-action btn-print"  onclick="window.print()">🖨️ Imprimir PDF</button>
+        <button class="btn-action btn-export" onclick="exportData()">📥 Exportar JSON</button>
+        <button class="btn-action btn-csv"    onclick="exportCSV()">📊 Exportar CSV</button>
+        <div   class="btn-action btn-import">
+            <label>📤 Importar JSON<input type="file" id="fileImport" accept=".json" style="display:none" onchange="importData(event)"></label>
         </div>
     </div>
 
@@ -238,17 +350,16 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // ── Claves localStorage: NO modificar ──
     const KEY_IN    = 'hortelano_in';
     const KEY_OUT   = 'hortelano_out';
     const KEY_MERMA = 'hortelano_merma';
 
     let inData  = JSON.parse(localStorage.getItem(KEY_IN))  || [];
     let outData = JSON.parse(localStorage.getItem(KEY_OUT)) || [];
+    let resumenMode = 'week';
 
     document.getElementById('cfgMerma').value = localStorage.getItem(KEY_MERMA) || 20;
 
-    // ── Toast ──
     function toast(msg, type = 'ok') {
         const c = document.getElementById('toast-container');
         const t = document.createElement('div');
@@ -256,120 +367,163 @@
         t.textContent = msg;
         c.appendChild(t);
         requestAnimationFrame(() => t.classList.add('show'));
-        setTimeout(() => {
-            t.classList.remove('show');
-            t.addEventListener('transitionend', () => t.remove(), { once: true });
-        }, type === 'err' ? 5500 : 3500);
+        setTimeout(() => { t.classList.remove('show'); t.addEventListener('transitionend', () => t.remove(), { once: true }); }, type === 'err' ? 5500 : 3500);
     }
 
-    // ── Helpers ──
-    function fmt(n) {
-        return n.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    }
-    function parseDate(str) {
-        const [d, m, y] = str.split('/');
-        return new Date(+y, +m - 1, +d);
-    }
-    function saveToDisk() {
-        localStorage.setItem(KEY_IN,  JSON.stringify(inData));
-        localStorage.setItem(KEY_OUT, JSON.stringify(outData));
-    }
-    function updateConfig() {
-        localStorage.setItem(KEY_MERMA, document.getElementById('cfgMerma').value);
-        renderAll();
-    }
+    function fmt(n) { return n.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+    function parseDate(str) { const [d,m,y] = str.split('/'); return new Date(+y, +m-1, +d); }
+    function saveToDisk() { localStorage.setItem(KEY_IN, JSON.stringify(inData)); localStorage.setItem(KEY_OUT, JSON.stringify(outData)); }
+    function updateConfig() { localStorage.setItem(KEY_MERMA, document.getElementById('cfgMerma').value); renderAll(); }
     function toggleDynamicField() {
-        const type = document.getElementById('fType').value;
-        const w    = document.getElementById('dynamicFieldWrapper');
-        if (type === 'IN') { w.style.display = 'none'; document.getElementById('fDynamic').value = ''; }
-        else                { w.style.display = 'flex'; }
+        const t = document.getElementById('fType').value;
+        const w = document.getElementById('dynamicFieldWrapper');
+        if (t === 'IN') { w.style.display = 'none'; document.getElementById('fDynamic').value = ''; }
+        else             { w.style.display = 'flex'; }
     }
 
-    // ── Cálculo de merma de una salida ──
-    function calcConsumido(r, defaultMerma) {
-        const neto  = r.type === 'GAZ' ? (r.qty / 1.5) : r.qty;
-        const merma = (r.merma !== undefined && r.merma !== null && !isNaN(r.merma)) ? r.merma : defaultMerma;
-        return { neto, merma, bruto: neto / (1 - merma / 100), basura: (neto / (1 - merma / 100)) - neto };
+    function calcConsumido(r, def) {
+        const neto  = r.type === 'GAZ' ? r.qty / 1.5 : r.qty;
+        const merma = (r.merma !== undefined && r.merma !== null && !isNaN(r.merma)) ? r.merma : def;
+        const bruto = neto / (1 - merma / 100);
+        return { neto, merma, bruto, basura: bruto - neto };
     }
 
-    // ── Gráfica ──
+    function calcDaysRemaining(balance, def) {
+        if (balance <= 0 || !outData.length) return null;
+        const cutoff = new Date(Date.now() - 14 * 864e5);
+        const recent = outData.filter(r => parseDate(r.date) >= cutoff);
+        const src    = recent.length >= 2 ? recent : outData;
+        const days   = recent.length >= 2 ? 14 : (() => {
+            const dates = src.map(r => parseDate(r.date).getTime());
+            return Math.max(1, (Math.max(...dates) - Math.min(...dates)) / 864e5);
+        })();
+        const tot = src.reduce((s, r) => s + calcConsumido(r, def).bruto, 0);
+        const avg = tot / days;
+        return avg > 0 ? Math.round(balance / avg) : null;
+    }
+
     let stockChart = null;
-    function updateChart() {
+    function updateStockChart(def) {
         if (typeof Chart === 'undefined') return;
-        const defaultMerma = parseFloat(document.getElementById('cfgMerma').value) || 20;
-        const canvas  = document.getElementById('stockChart');
-        const emptyEl = document.getElementById('chartEmpty');
-
+        const canvas = document.getElementById('stockChart');
+        const empty  = document.getElementById('chartEmpty');
         const events = [
             ...inData.map(r  => ({ date: r.date, kind: 'IN',  qty: r.qty, merma: null, type: null })),
             ...outData.map(r => ({ date: r.date, kind: 'OUT', qty: r.qty, merma: r.merma, type: r.type }))
         ].sort((a, b) => parseDate(a.date) - parseDate(b.date));
 
-        if (!events.length) {
-            canvas.style.display = 'none';
-            emptyEl.style.display = 'block';
-            return;
-        }
-        canvas.style.display = 'block';
-        emptyEl.style.display = 'none';
+        if (!events.length) { canvas.style.display = 'none'; empty.style.display = 'block'; return; }
+        canvas.style.display = 'block'; empty.style.display = 'none';
 
-        let balance = 0;
-        const labels = [], values = [], pointColors = [];
-
+        let bal = 0;
+        const labels = [], values = [], pts = [];
         events.forEach(e => {
-            if (e.kind === 'IN') {
-                balance += e.qty;
-            } else {
-                const { bruto } = calcConsumido(e, defaultMerma);
-                balance -= bruto;
-            }
-            labels.push(e.date);
-            values.push(parseFloat(balance.toFixed(2)));
-            pointColors.push(balance < 0 ? '#8b0000' : '#27ae60');
+            bal += e.kind === 'IN' ? e.qty : -calcConsumido(e, def).bruto;
+            labels.push(e.date); values.push(parseFloat(bal.toFixed(2))); pts.push(bal < 0 ? '#8b0000' : '#27ae60');
         });
 
         if (!stockChart) {
             stockChart = new Chart(canvas.getContext('2d'), {
                 type: 'line',
-                data: {
-                    labels,
-                    datasets: [{
-                        label: 'Stock (kg)',
-                        data: values,
-                        borderColor: '#2c3e50',
-                        backgroundColor: 'rgba(44,62,80,0.06)',
-                        pointBackgroundColor: pointColors,
-                        pointRadius: 5,
-                        tension: 0.3,
-                        fill: true,
-                        borderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: { callbacks: { label: ctx => ` ${fmt(ctx.parsed.y)} kg` } }
-                    },
-                    scales: {
-                        y: { grid: { color: '#f0f0f0' }, ticks: { callback: v => fmt(v) + ' kg', font: { size: 10 } } },
-                        x: { ticks: { font: { size: 9 }, maxRotation: 45 } }
-                    }
-                }
+                data: { labels, datasets: [{ label: 'Stock (kg)', data: values, borderColor: '#2c3e50', backgroundColor: 'rgba(44,62,80,.06)', pointBackgroundColor: pts, pointRadius: 5, tension: .3, fill: true, borderWidth: 2 }] },
+                options: { responsive: true, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${fmt(ctx.parsed.y)} kg` } } }, scales: { y: { grid: { color: '#f0f0f0' }, ticks: { callback: v => fmt(v)+' kg', font: { size: 10 } } }, x: { ticks: { font: { size: 9 }, maxRotation: 45 } } } }
             });
         } else {
             stockChart.data.labels = labels;
             stockChart.data.datasets[0].data = values;
-            stockChart.data.datasets[0].pointBackgroundColor = pointColors;
+            stockChart.data.datasets[0].pointBackgroundColor = pts;
             stockChart.update();
         }
     }
 
-    // ── Render tablas + KPIs ──
-    function renderAll() {
-        const defaultMerma = parseFloat(document.getElementById('cfgMerma').value) || 20;
+    let mermaChart = null;
+    function updateMermaChart(def) {
+        if (typeof Chart === 'undefined') return;
+        const canvas = document.getElementById('mermaChart');
+        const empty  = document.getElementById('mermaChartEmpty');
+        if (!outData.length) { canvas.style.display = 'none'; empty.style.display = 'block'; return; }
+        canvas.style.display = 'block'; empty.style.display = 'none';
 
-        // Tabla entradas
+        const sorted = [...outData].sort((a, b) => parseDate(a.date) - parseDate(b.date));
+        const labels = sorted.map(r => r.date + (r.type === 'GAZ' ? ' G' : ' S'));
+        const values = sorted.map(r => calcConsumido(r, def).merma);
+        const colors = values.map(v => v > def * 1.4 ? '#8b0000' : v > def * 1.15 ? '#e67e22' : '#27ae60');
+
+        if (!mermaChart) {
+            mermaChart = new Chart(canvas.getContext('2d'), {
+                type: 'bar',
+                data: { labels, datasets: [{ label: 'Merma %', data: values, backgroundColor: colors, borderRadius: 3 }] },
+                options: { responsive: true, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${fmt(ctx.parsed.y)} %` } } }, scales: { y: { grid: { color: '#f0f0f0' }, ticks: { callback: v => v+' %', font: { size: 10 } } }, x: { ticks: { font: { size: 9 }, maxRotation: 45 } } } }
+            });
+        } else {
+            mermaChart.data.labels = labels;
+            mermaChart.data.datasets[0].data = values;
+            mermaChart.data.datasets[0].backgroundColor = colors;
+            mermaChart.update();
+        }
+    }
+
+    function getGroupKey(dateStr, mode) {
+        const [d, m, y] = dateStr.split('/');
+        const date = new Date(+y, +m-1, +d);
+        if (mode === 'month') return `${y}-${m.padStart(2,'0')}`;
+        const dow  = date.getDay();
+        const mon  = new Date(date); mon.setDate(date.getDate() - dow + (dow === 0 ? -6 : 1));
+        return `${mon.getFullYear()}-${String(mon.getMonth()+1).padStart(2,'0')}-${String(mon.getDate()).padStart(2,'0')}`;
+    }
+    function getGroupLabel(key, mode) {
+        const MES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+        const ABR = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+        if (mode === 'month') { const [y,m] = key.split('-'); return `${MES[+m-1]} ${y}`; }
+        const [y,m,d] = key.split('-');
+        const mon = new Date(+y,+m-1,+d);
+        const sun = new Date(mon); sun.setDate(mon.getDate()+6);
+        return `${mon.getDate()} ${ABR[mon.getMonth()]} – ${sun.getDate()} ${ABR[sun.getMonth()]}`;
+    }
+    function setResumenMode(mode) {
+        resumenMode = mode;
+        document.getElementById('btnWeek').classList.toggle('active',  mode === 'week');
+        document.getElementById('btnMonth').classList.toggle('active', mode === 'month');
+        document.getElementById('thPeriod').textContent = mode === 'week' ? 'Semana' : 'Mes';
+        renderResumen();
+    }
+    function renderResumen() {
+        const def = parseFloat(document.getElementById('cfgMerma').value) || 20;
+        const G = {};
+        const ensure = k => { if (!G[k]) G[k] = { entrada:0, gaz:0, salm:0, consumo:0, mSum:0, mCnt:0 }; };
+        inData.forEach(r  => { const k = getGroupKey(r.date, resumenMode); ensure(k); G[k].entrada += r.qty; });
+        outData.forEach(r => {
+            const k = getGroupKey(r.date, resumenMode); ensure(k);
+            const { merma, bruto } = calcConsumido(r, def);
+            if (r.type === 'GAZ') G[k].gaz += r.qty; else G[k].salm += r.qty;
+            G[k].consumo += bruto; G[k].mSum += merma; G[k].mCnt++;
+        });
+        const keys = Object.keys(G).sort();
+        const empty = document.getElementById('resumenEmpty');
+        const wrap  = document.getElementById('resumenWrapper');
+        if (!keys.length) { empty.style.display = 'block'; wrap.style.display = 'none'; return; }
+        empty.style.display = 'none'; wrap.style.display = 'block';
+        const tbody = document.getElementById('tableResumen').tBodies[0];
+        tbody.innerHTML = '';
+        keys.forEach(k => {
+            const g = G[k]; const bal = g.entrada - g.consumo;
+            const mm = g.mCnt ? g.mSum / g.mCnt : null;
+            const mmCls = mm === null ? '' : mm > def*1.4 ? 'td-merma-bad' : mm > def*1.15 ? 'td-merma-warn' : 'td-merma-ok';
+            tbody.innerHTML += `<tr>
+                <td><strong>${getGroupLabel(k, resumenMode)}</strong></td>
+                <td class="num">${g.entrada > 0 ? fmt(g.entrada)+' kg' : '—'}</td>
+                <td class="num">${g.gaz  > 0 ? fmt(g.gaz)+' L'   : '—'}</td>
+                <td class="num">${g.salm > 0 ? fmt(g.salm)+' kg' : '—'}</td>
+                <td class="num ${mmCls}">${mm !== null ? fmt(mm)+' %' : '—'}</td>
+                <td class="num">${g.consumo > 0 ? fmt(g.consumo)+' kg' : '—'}</td>
+                <td class="num" style="color:${bal<0?'#8b0000':'#27ae60'}">${(bal>=0?'+':'')+fmt(bal)} kg</td>
+            </tr>`;
+        });
+    }
+
+    function renderAll() {
+        const def = parseFloat(document.getElementById('cfgMerma').value) || 20;
+
         const tbIn = document.getElementById('tableIn').tBodies[0];
         tbIn.innerHTML = '';
         let tBruto = 0;
@@ -378,172 +532,205 @@
             tBruto += r.qty;
             tbIn.innerHTML += `<tr>
                 <td>${r.date}</td>
-                <td>${r.ref}</td>
+                <td>${r.ref}${r.operator ? `<br><small style="color:#aaa">${r.operator}</small>` : ''}</td>
                 <td class="num">${fmt(r.qty)} kg</td>
-                <td class="no-print right"><button class="btn-del" onclick="delIn(${i})">✕</button></td>
+                <td class="no-print right">
+                    <button class="btn-edit" onclick="openEdit('IN',${i})">✎</button>
+                    <button class="btn-del"  onclick="delIn(${i})">✕</button>
+                </td>
             </tr>`;
         });
         if (!inData.length) tbIn.innerHTML = `<tr><td colspan="4" class="empty-state">Sin entradas registradas</td></tr>`;
 
-        // Tabla salidas
         const tbOut = document.getElementById('tableOut').tBodies[0];
         tbOut.innerHTML = '';
         let vGaz = 0, kSalm = 0, tConsumo = 0, tBasura = 0;
         [...outData].reverse().forEach((r, ri) => {
             const i = outData.length - 1 - ri;
             if (r.type === 'GAZ') vGaz += r.qty; else kSalm += r.qty;
-            const { merma, bruto, basura } = calcConsumido(r, defaultMerma);
-            tConsumo += bruto;
-            tBasura  += basura;
-
-            let mermaCls = 'td-merma-ok';
-            if      (merma > defaultMerma * 1.4)  mermaCls = 'td-merma-bad';
-            else if (merma > defaultMerma * 1.15)  mermaCls = 'td-merma-warn';
-
+            const { merma, bruto, basura } = calcConsumido(r, def);
+            tConsumo += bruto; tBasura += basura;
+            const cls = merma > def*1.4 ? 'td-merma-bad' : merma > def*1.15 ? 'td-merma-warn' : 'td-merma-ok';
             tbOut.innerHTML += `<tr>
                 <td>${r.date}</td>
-                <td><strong>${r.type}</strong> <small style="color:#999;">${r.ref}</small></td>
+                <td><strong>${r.type}</strong> <small style="color:#999">${r.ref}</small>${r.operator ? `<br><small style="color:#aaa">${r.operator}</small>` : ''}</td>
                 <td class="num">${fmt(r.qty)}</td>
-                <td class="num ${mermaCls}">${fmt(merma)} %</td>
+                <td class="num ${cls}">${fmt(merma)} %</td>
                 <td class="num">${fmt(bruto)} kg</td>
-                <td class="no-print right"><button class="btn-del" onclick="delOut(${i})">✕</button></td>
+                <td class="no-print right">
+                    <button class="btn-edit" onclick="openEdit('OUT',${i})">✎</button>
+                    <button class="btn-del"  onclick="delOut(${i})">✕</button>
+                </td>
             </tr>`;
         });
         if (!outData.length) tbOut.innerHTML = `<tr><td colspan="6" class="empty-state">Sin salidas registradas</td></tr>`;
 
-        // KPIs
-        const bal    = tBruto - tConsumo;
-        const balEl  = document.getElementById('kpiBalance');
-        const cardBal = document.getElementById('cardBal');
+        const bal = tBruto - tConsumo;
         document.getElementById('kpiLimpio').textContent  = fmt(tBruto)  + ' kg';
         document.getElementById('kpiConsumo').textContent = fmt(tConsumo) + ' kg';
         document.getElementById('kpiBasura').textContent  = fmt(tBasura)  + ' kg';
         document.getElementById('kpiGaz').textContent     = fmt(vGaz)     + ' L';
         document.getElementById('kpiSalm').textContent    = fmt(kSalm)    + ' kg';
-        balEl.textContent  = (bal >= 0 ? '+' : '') + fmt(bal) + ' kg';
-        balEl.style.color  = bal < 0 ? '#8b0000' : '#27ae60';
-        cardBal.className  = 'kpi-card ' + (bal < 0 ? 'kpi-loss' : 'kpi-gain');
+        const balEl = document.getElementById('kpiBalance');
+        balEl.textContent = (bal >= 0 ? '+' : '') + fmt(bal) + ' kg';
+        balEl.style.color = bal < 0 ? '#8b0000' : '#27ae60';
+        document.getElementById('cardBal').className = 'kpi-card ' + (bal < 0 ? 'kpi-loss' : 'kpi-gain');
 
-        // Resúmenes
-        document.getElementById('boxIn').innerHTML  = inData.length
-            ? `Total ingresado: <strong>${fmt(tBruto)} kg</strong> en <strong>${inData.length}</strong> entrada${inData.length !== 1 ? 's' : ''}`
-            : 'Sin entradas registradas.';
-        document.getElementById('boxOut').innerHTML = outData.length
-            ? `Neto: <strong>${fmt(vGaz)} L</strong> Gaz &nbsp;|&nbsp; <strong>${fmt(kSalm)} kg</strong> Salm &nbsp;|&nbsp; Desperdicio: <strong>${fmt(tBasura)} kg</strong>`
-            : 'Sin salidas registradas.';
+        const dias = calcDaysRemaining(bal, def);
+        const diasEl = document.getElementById('kpiDias');
+        const noteEl = document.getElementById('kpiPredNote');
+        if (dias === null) {
+            diasEl.textContent = '— días'; diasEl.className = 'pred-dias';
+            noteEl.textContent = 'Sin datos de consumo suficientes para estimar.';
+        } else {
+            diasEl.textContent = `${dias} día${dias !== 1 ? 's' : ''}`;
+            diasEl.className = 'pred-dias ' + (dias < 3 ? 'pred-bad' : dias < 7 ? 'pred-warn' : 'pred-ok');
+            noteEl.textContent = `Stock estimado para ${dias} día${dias !== 1 ? 's' : ''} según el ritmo de consumo reciente.`;
+        }
 
+        document.getElementById('boxIn').innerHTML  = inData.length  ? `Total ingresado: <strong>${fmt(tBruto)} kg</strong> en <strong>${inData.length}</strong> entrada${inData.length !== 1 ? 's' : ''}` : 'Sin entradas registradas.';
+        document.getElementById('boxOut').innerHTML = outData.length ? `Neto: <strong>${fmt(vGaz)} L</strong> Gaz &nbsp;|&nbsp; <strong>${fmt(kSalm)} kg</strong> Salm &nbsp;|&nbsp; Desperdicio: <strong>${fmt(tBasura)} kg</strong>` : 'Sin salidas registradas.';
         document.getElementById('countIn').textContent  = `${inData.length} entrada${inData.length !== 1 ? 's' : ''}`;
         document.getElementById('countOut').textContent = `${outData.length} salida${outData.length !== 1 ? 's' : ''}`;
 
-        updateChart();
+        updateStockChart(def);
+        updateMermaChart(def);
+        renderResumen();
     }
 
-    // ── Añadir registro ──
     function addEntry() {
         const dateInput = document.getElementById('fDate').value;
         const type      = document.getElementById('fType').value;
         const qty       = parseFloat(document.getElementById('fQty').value);
         const dynVal    = parseFloat(document.getElementById('fDynamic').value);
         const ref       = document.getElementById('fRef').value.trim() || 'Manual';
-
-        if (!dateInput)      return toast('Selecciona una fecha antes de continuar.', 'warn');
+        const operator  = document.getElementById('fOperator').value.trim();
+        if (!dateInput)       return toast('Selecciona una fecha antes de continuar.', 'warn');
         if (!qty || qty <= 0) return toast('La cantidad debe ser mayor que cero.', 'warn');
-
         const fDate = dateInput.split('-').reverse().join('/');
-
         if (type === 'IN') {
-            inData.push({ date: fDate, ref, qty });
+            inData.push({ date: fDate, ref, qty, operator });
             toast(`✓ ${fmt(qty)} kg de tomate registrados.`, 'ok');
         } else {
-            const defaultMerma = parseFloat(document.getElementById('cfgMerma').value) || 20;
-            const merma = isNaN(dynVal) ? defaultMerma : dynVal;
-            outData.push({ date: fDate, type, ref, qty, merma });
-            const lbl = type === 'GAZ' ? 'L de Gazpacho' : 'kg de Salmorejo';
-            toast(`✓ ${fmt(qty)} ${lbl} anotados (merma ${fmt(merma)} %).`, 'ok');
+            const def   = parseFloat(document.getElementById('cfgMerma').value) || 20;
+            const merma = isNaN(dynVal) ? def : dynVal;
+            outData.push({ date: fDate, type, ref, qty, merma, operator });
+            toast(`✓ ${fmt(qty)} ${type === 'GAZ' ? 'L de Gazpacho' : 'kg de Salmorejo'} anotados (merma ${fmt(merma)} %).`, 'ok');
         }
-
-        saveToDisk();
-        renderAll();
-        document.getElementById('fQty').value    = '';
-        document.getElementById('fRef').value    = '';
+        saveToDisk(); renderAll();
+        document.getElementById('fQty').value = '';
+        document.getElementById('fRef').value = '';
         document.getElementById('fDynamic').value = '';
         document.getElementById('fQty').focus();
     }
 
-    // ── Eliminar ──
-    function delIn(i) {
-        if (!confirm(`¿Eliminar la entrada de ${fmt(inData[i].qty)} kg del ${inData[i].date}?`)) return;
-        inData.splice(i, 1);
-        saveToDisk(); renderAll();
-        toast('Entrada eliminada.', 'warn');
+    function delIn(i)  { if (!confirm(`¿Eliminar la entrada de ${fmt(inData[i].qty)} kg del ${inData[i].date}?`)) return; inData.splice(i,1);  saveToDisk(); renderAll(); toast('Entrada eliminada.','warn'); }
+    function delOut(i) { if (!confirm(`¿Eliminar la salida de ${fmt(outData[i].qty)} del ${outData[i].date}?`))   return; outData.splice(i,1); saveToDisk(); renderAll(); toast('Salida eliminada.','warn'); }
+
+    let editCtx = null;
+    function openEdit(type, i) {
+        editCtx = { type, i };
+        const r = type === 'IN' ? inData[i] : outData[i];
+        document.getElementById('eDate').value     = r.date.split('/').reverse().join('-');
+        document.getElementById('eRef').value      = r.ref;
+        document.getElementById('eQty').value      = r.qty;
+        document.getElementById('eOperator').value = r.operator || '';
+        const mermaRow = document.getElementById('eMermaRow');
+        const eType    = document.getElementById('eType');
+        if (type === 'IN') {
+            mermaRow.style.display = 'none';
+            eType.innerHTML = '<option value="IN">Entrada de Tomate</option>';
+        } else {
+            mermaRow.style.display = '';
+            eType.innerHTML = '<option value="GAZ">Gazpacho (L)</option><option value="SAL">Salmorejo (kg)</option>';
+            eType.value = r.type;
+            document.getElementById('eMerma').value = r.merma;
+        }
+        document.getElementById('editModal').classList.add('open');
     }
-    function delOut(i) {
-        if (!confirm(`¿Eliminar la salida de ${fmt(outData[i].qty)} del ${outData[i].date}?`)) return;
-        outData.splice(i, 1);
-        saveToDisk(); renderAll();
-        toast('Salida eliminada.', 'warn');
+    function closeModal() { document.getElementById('editModal').classList.remove('open'); editCtx = null; }
+    function saveEdit() {
+        const { type, i } = editCtx;
+        const dateInput = document.getElementById('eDate').value;
+        const qty       = parseFloat(document.getElementById('eQty').value);
+        const ref       = document.getElementById('eRef').value.trim() || 'Manual';
+        const operator  = document.getElementById('eOperator').value.trim();
+        if (!dateInput || !qty || qty <= 0) return toast('Rellena todos los campos correctamente.', 'warn');
+        const fDate = dateInput.split('-').reverse().join('/');
+        if (type === 'IN') {
+            inData[i] = { ...inData[i], date: fDate, ref, qty, operator };
+        } else {
+            const merma   = parseFloat(document.getElementById('eMerma').value);
+            const newType = document.getElementById('eType').value;
+            const def     = parseFloat(document.getElementById('cfgMerma').value) || 20;
+            outData[i] = { ...outData[i], date: fDate, type: newType, ref, qty, merma: isNaN(merma) ? def : merma, operator };
+        }
+        closeModal(); saveToDisk(); renderAll();
+        toast('✓ Registro actualizado.', 'ok');
     }
 
-    // ── Borrar todo ──
     function clearAllData() {
         if (!confirm('¿Seguro? Esto borrará TODOS los datos de forma permanente.\n\nExporta una copia de seguridad primero.')) return;
         if (!confirm('Última confirmación. ¿Borrar todos los registros de El Hortelano?')) return;
-        localStorage.removeItem(KEY_IN);
-        localStorage.removeItem(KEY_OUT);
-        localStorage.removeItem(KEY_MERMA);
+        localStorage.removeItem(KEY_IN); localStorage.removeItem(KEY_OUT); localStorage.removeItem(KEY_MERMA);
         location.reload();
     }
 
-    // ── Exportar JSON ──
     function exportData() {
-        const payload = {
-            app:          'ElHortelano_Mermas',
-            exportado_en: new Date().toISOString(),
-            merma_defecto: document.getElementById('cfgMerma').value,
-            entradas: inData,
-            salidas:  outData
-        };
-        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-        const url  = URL.createObjectURL(blob);
-        const a    = document.createElement('a');
-        a.href     = url;
-        a.download = `Backup_ElHortelano_${new Date().toLocaleDateString('es-ES').replace(/\//g, '-')}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
+        const payload = { app: 'ElHortelano_Mermas', exportado_en: new Date().toISOString(), merma_defecto: document.getElementById('cfgMerma').value, entradas: inData, salidas: outData };
+        const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob([JSON.stringify(payload,null,2)],{type:'application/json'})), download: `Backup_ElHortelano_${new Date().toLocaleDateString('es-ES').replace(/\//g,'-')}.json` });
+        a.click(); URL.revokeObjectURL(a.href);
         toast(`✓ Exportados: ${inData.length} entradas y ${outData.length} salidas.`, 'ok');
     }
 
-    // ── Importar JSON ──
-    function importData(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-            try {
-                const data = JSON.parse(ev.target.result);
-                if (!Array.isArray(data.entradas) || !Array.isArray(data.salidas))
-                    return toast('Archivo no reconocido. ¿Es una exportación válida de El Hortelano?', 'err');
-                if (!confirm(`¿Importar ${data.entradas.length} entradas y ${data.salidas.length} salidas?\nLos datos actuales serán reemplazados.`)) return;
-                inData  = data.entradas;
-                outData = data.salidas;
-                if (data.merma_defecto) {
-                    document.getElementById('cfgMerma').value = data.merma_defecto;
-                    localStorage.setItem(KEY_MERMA, data.merma_defecto);
-                }
-                saveToDisk(); renderAll();
-                toast(`✓ Importados: ${inData.length} entradas, ${outData.length} salidas.`, 'ok');
-            } catch { toast('Error al leer el archivo. ¿Es un JSON válido?', 'err'); }
-        };
-        reader.readAsText(file);
-        e.target.value = '';
+    function exportCSV() {
+        const def = parseFloat(document.getElementById('cfgMerma').value) || 20;
+        let csv = 'Tipo,Fecha,Referencia,Operador,Cantidad,Unidad,Merma%,TomateConsumido(kg)\n';
+        inData.forEach(r => { csv += `Entrada,${r.date},"${r.ref}","${r.operator||''}",${r.qty},kg,,\n`; });
+        outData.forEach(r => {
+            const { merma, bruto } = calcConsumido(r, def);
+            csv += `${r.type==='GAZ'?'Gazpacho':'Salmorejo'},${r.date},"${r.ref}","${r.operator||''}",${r.qty},${r.type==='GAZ'?'L':'kg'},${merma.toFixed(2)},${bruto.toFixed(2)}\n`;
+        });
+        const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8;'})), download: `Registro_ElHortelano_${new Date().toLocaleDateString('es-ES').replace(/\//g,'-')}.csv` });
+        a.click(); URL.revokeObjectURL(a.href);
+        toast('✓ CSV exportado correctamente.', 'ok');
     }
 
-    // ── Init ──
+    function importData(e) {
+        const file = e.target.files[0]; if (!file) return;
+        const reader = new FileReader();
+        reader.onload = ev => {
+            try {
+                const data = JSON.parse(ev.target.result);
+                if (!Array.isArray(data.entradas) || !Array.isArray(data.salidas)) return toast('Archivo no reconocido. ¿Es una exportación válida de El Hortelano?','err');
+                if (!confirm(`¿Importar ${data.entradas.length} entradas y ${data.salidas.length} salidas?\nLos datos actuales serán reemplazados.`)) return;
+                inData = data.entradas; outData = data.salidas;
+                if (data.merma_defecto) { document.getElementById('cfgMerma').value = data.merma_defecto; localStorage.setItem(KEY_MERMA, data.merma_defecto); }
+                saveToDisk(); renderAll();
+                toast(`✓ Importados: ${inData.length} entradas, ${outData.length} salidas.`, 'ok');
+            } catch { toast('Error al leer el archivo. ¿Es un JSON válido?','err'); }
+        };
+        reader.readAsText(file); e.target.value = '';
+    }
+
+    function calcPedido() {
+        const type  = document.getElementById('calcType').value;
+        const qty   = parseFloat(document.getElementById('calcQty').value);
+        const mIn   = parseFloat(document.getElementById('calcMerma').value);
+        const def   = parseFloat(document.getElementById('cfgMerma').value) || 20;
+        const merma = isNaN(mIn) ? def : mIn;
+        if (!qty || qty <= 0) { document.getElementById('calcOutput').textContent = '—'; return; }
+        const neto  = type === 'GAZ' ? qty / 1.5 : qty;
+        document.getElementById('calcOutput').textContent = fmt(neto / (1 - merma / 100)) + ' kg';
+    }
+
     document.getElementById('fDate').value = new Date().toISOString().split('T')[0];
     toggleDynamicField();
     document.addEventListener('keydown', e => {
-        if (e.key === 'Enter' && document.activeElement.closest('.form-panel')) addEntry();
+        if (e.key === 'Enter'  && document.activeElement.closest('.form-panel')) addEntry();
+        if (e.key === 'Escape') closeModal();
     });
+    document.getElementById('editModal').addEventListener('click', e => { if (e.target === document.getElementById('editModal')) closeModal(); });
     renderAll();
 </script>
 </body>
